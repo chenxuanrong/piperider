@@ -33,4 +33,7 @@ class ReconcileRule:
         for c_rule in self.column_reconcile_rules:
             if not c_rule.name:
                 reasons.append("Column reconcile miss rule name")
+            if not all([c_rule.base_compare_key , c_rule.target_compare_key]):
+                reasons.append("Compare key is missing")
+            
         return reasons == [], reasons
