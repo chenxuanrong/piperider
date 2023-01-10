@@ -31,7 +31,17 @@ const insertDataToHTML = async () => {
   log(PATH_TO_COMPARISON_REPORT_DATA_JSON);
 
   // Set PipeRider Metadata
-  const metadata = await getMetadata();
+  // const metadata = await getMetadata();
+  const metadata = {
+    name: 'PipeRider',
+    version: '0.8.0-dev',
+    sentry_dns:
+      'https://41930bf397884adfb2617fe350231439@o1081482.ingest.sentry.io/6463955',
+    sentry_env: 'development',
+    amplitude_api_key: '',
+    amplitude_user_id: '',
+    amplitude_project_id: '',
+  };
   log(metadata);
   await generateFile(PATH_TO_METADATA_DATA_JSON, JSON.stringify(metadata));
 

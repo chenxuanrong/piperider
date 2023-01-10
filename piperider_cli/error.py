@@ -178,3 +178,13 @@ class AwsCredentialsError(PipeRiderError):
 class AwsUnExistedS3Bucket(PipeRiderError):
     def __init__(self, bucket):
         self.message = f'S3 bucket "{bucket}" does not exist'
+
+
+class ReconcileRuleAssertionError(PipeRiderError):
+    def __init__(self):
+        self.message = "Reconcile rule not valid."
+        self.hint = "Please check rule name is provided"
+
+class UnhandableColumnTypeError(PipeRiderError):
+    def __init__(self):
+        self.message = "Base column and Target column in not reconciable"
