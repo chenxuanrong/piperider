@@ -155,15 +155,19 @@ Reconciles:
       target_column: postcode
 ```
 
-Run `piperider reconcile` and after the successful execution, the result is saves in `.piperider/outputs/latest/reconcile.json`
+Common Usage
 
+```
+piperider reconcile    # reconcile base and target datasets
+```
 
+The result is saved to `.piperider/outputs/latest/reconcile.json`
 
 
 **Limitations:**
-- Base and target tables are located in the same schema
+- Base and target tables need to be located in the same schema
 - `join_key` needs to be a single column. List of columns configuration will be supported in the future.
-- If there are multiple reconciles defined, only the top one will be executed.
+- If there are multiple reconcile block defined, only the top one will be executed.
 
 
 
