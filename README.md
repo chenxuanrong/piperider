@@ -22,6 +22,16 @@
   <a href="https://blog.infuseai.io/data-reliability-automated-with-piperider-7a823521ef11"> Blog </a> 
 </p>
 
+# Table of Contents
+
+- [Data Reliability = Profiling + Testing](#data-reliability--profiling--testing)
+- [Quickstart](#quickstart)
+  - [Installation](#installation)
+  - [Initialize Project & Diagnose Settings](#initialize-project--diagnose-settings)
+  - [Profiling and Testing Your Data](#profiling-and-testing-your-data)
+  - [Comparing Your Data Profiles](#comparing-your-data-profiles)
+  - [Reconcile datasets](#reconcile-datasets)
+
 # Data Reliability = Profiling + Testing
 
 Piperider is a CLI tool that allows you to build data profiles and write assertion tests for easily evaluating and tracking your data's reliability over time.
@@ -118,6 +128,48 @@ For more details on the generated report, see the [doc](https://docs.piperider.i
 [See Generated Single-Run Report](https://piperider-github-readme.s3.ap-northeast-1.amazonaws.com/run-0.16.0/index.html)
 
 [See Comparison Report](https://piperider-github-readme.s3.ap-northeast-1.amazonaws.com/comparison-0.16.0/index.html)
+
+
+## Reconcile datasets
+
+Create a file `.piperider/reconcile.yml` after initialisation.
+
+A sample reconcile declaration 
+
+```yaml
+Reconciles:
+  source: domain # refer to source name in config.yml
+  name: <reconcile_name>  #description purpose
+  base:
+    table: address
+    join_key: address_id 
+
+  target:
+    table: address_beta
+    join_key: address_id
+  
+  rules:
+    - name: postcode
+      description: Compare postcode are equal for individual address_id
+      base_column: postcode
+      target_column: postcode
+```
+
+Common Usage
+
+```
+piperider reconcile    # reconcile base and target datasets
+```
+
+The result is saved to `.piperider/outputs/latest/reconcile.json`
+
+
+**Limitations:**
+- Base and target tables need to be located in the same schema
+- `join_key` needs to be a single column. List of columns configuration will be supported in the future.
+- If there are multiple reconcile block defined, only the top one will be executed.
+
+
 
 # Development
 

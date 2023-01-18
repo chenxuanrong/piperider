@@ -8,6 +8,7 @@ from ruamel.yaml import CommentedMap, CommentedSeq
 
 from piperider_cli import round_trip_load_yaml, safe_load_yaml
 from piperider_cli.datasource import DATASOURCE_PROVIDERS, DataSource
+from piperider_cli.reconciler.reconcile_rule import ReconcileRule, ColumnReconcileRule
 from piperider_cli.error import \
     PipeRiderConfigError, \
     PipeRiderConfigTypeError, \
@@ -16,11 +17,13 @@ from piperider_cli.error import \
     DbtProfileNotFoundError, \
     DbtProjectInvalidError, \
     DbtProfileInvalidError, \
-    DbtProfileBigQueryAuthWithTokenUnsupportedError
+    DbtProfileBigQueryAuthWithTokenUnsupportedError, \
+    ReconcileRuleAssertionError
 
 PIPERIDER_WORKSPACE_NAME = '.piperider'
 PIPERIDER_CONFIG_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'config.yml')
 PIPERIDER_CREDENTIALS_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'credentials.yml')
+PIPERIDER_RECONCILE_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'reconcile.yml')
 
 # ref: https://docs.getdbt.com/dbt-cli/configure-your-profile
 DBT_PROFILES_DIR_DEFAULT = '~/.dbt/'
@@ -33,7 +36,7 @@ class Configuration(object):
     at $PROJECT_ROOT/.piperider/config.yml
     """
 
-    def __init__(self, dataSources: List[DataSource], **kwargs):
+    def __init__(self, dataSources: List[DataSource], reconcileRules: List[ReconcileRule]=None, **kwargs):
         self.dataSources: List[DataSource] = dataSources
         self.profiler_config = kwargs.get('profiler', {}) or {}
         self.includes = kwargs.get('includes', None)
@@ -42,6 +45,7 @@ class Configuration(object):
         self.tables = kwargs.get('tables', {})
         self.telemetry_id = kwargs.get('telemetry_id', None)
         self.report_dir = self._to_report_dir(kwargs.get('report_dir', '.'))
+        self.reconcileRules: List[ReconcileRule] = reconcileRules
 
         self._verify_input_config()
         self.includes = [str(t) for t in self.includes] if self.includes else self.includes
@@ -141,7 +145,7 @@ class Configuration(object):
         return cls(dataSources=[datasource])
 
     @classmethod
-    def load(cls, piperider_config_path=PIPERIDER_CONFIG_PATH):
+    def load(cls, piperider_config_path=PIPERIDER_CONFIG_PATH, piperider_reconcile_path=PIPERIDER_RECONCILE_PATH):
         """
         load from the existing configuration
 
@@ -202,6 +206,53 @@ class Configuration(object):
                 data_source = datasource_class(name=ds.get('name'), credential=credential)
             data_sources.append(data_source)
 
+        # Reconcile rules is optional
+        reconcile_rules: List[ReconcileRule] = []
+
+        if os.path.exists(piperider_reconcile_path):
+            with open(piperider_reconcile_path, 'r') as frecon:
+                r_config = yaml.safe_load(frecon)
+
+            reconcile_config = r_config.get('Reconciles')
+            if reconcile_config:
+                reconcile_source_name = reconcile_config.get('source')
+                reconcile_set_name = reconcile_config.get('name')
+                base_table = reconcile_config.get('base', {}).get('table')
+                base_join_key = reconcile_config.get('base', {}).get('join_key')
+
+                target_table = reconcile_config.get('target', {}).get('table')
+                target_join_key = reconcile_config.get('target', {}).get('join_key')
+
+                rules = []
+                for r in reconcile_config.get('rules', []):
+                    rule_name = r.get('name')
+                    if not rule_name:
+                        raise ReconcileRuleAssertionError()
+
+                    c_rule = ColumnReconcileRule(
+                        base_column=base_join_key,
+                        target_column=target_join_key,
+                        base_compare_key=r.get('base_column'),
+                        target_compare_key=r.get('target_column'),
+                        name=rule_name,
+                        description=r.get('description'),
+                    )
+
+                    rules.append(c_rule)
+
+                reconcile_rules.append(
+                    ReconcileRule(
+                        source=reconcile_source_name,
+                        name=reconcile_set_name,
+                        base_table=base_table,
+                        target_table=target_table,
+                        base_join_key=base_join_key,
+                        target_join_key=target_join_key,
+                        column_reconcile_rules=rules
+                    )
+                )
+
+
         return cls(
             dataSources=data_sources,
             profiler=config.get('profiler', {}),
@@ -210,7 +261,8 @@ class Configuration(object):
             excludes=config.get('excludes', None),
             include_views=config.get('include_views', False),
             telemetry_id=config.get('telemetry', {}).get('id'),
-            report_dir=config.get('report_dir', '.')
+            report_dir=config.get('report_dir', '.'),
+            reconcileRules=reconcile_rules,
         )
 
     def flush_datasource(self, path):
