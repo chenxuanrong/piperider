@@ -167,6 +167,23 @@ class CloudAccountChecker(AbstractChecker):
             self.console.print(f"  Auto Upload: {piperider_cloud.config.get('auto_upload', False)}")
             return True, ""
 
+class CheckReconcileRules(AbstractChecker):
+    def check_function(self, configurator: Configuration) -> (bool, str):
+        all_passed = True
+        failed_reasons = []
+
+        for rule in configurator.reconcileRules:
+            passed, reasons = rule.validate()
+
+            if passed:
+                self.console.print(f'  Name: {rule.name}: [[bold green]OK[/bold green]]')
+            else:
+                all_passed = False
+                self.console.print(f'  Name: {rule.name}: [[bold red]FAILED[/bold red]]')
+                for reason in reasons:
+                    self.console.print(f'    {reason}')
+                failed_reasons.extend(reasons)
+        return all_passed, failed_reasons
 
 class Validator():
     @staticmethod
@@ -176,6 +193,7 @@ class Validator():
         handler.set_checker('format of data sources', CheckDataSources)
         handler.set_checker('connections', CheckConnections)
         handler.set_checker('assertion files', CheckAssertionFiles)
+        handler.set_checker('reconcile rules', CheckReconcileRules)
         if piperider_cloud.has_configured():
             handler.set_checker('cloud account', CloudAccountChecker)
         return handler.execute()

@@ -20,6 +20,8 @@ from piperider_cli.guide import Guide
 from piperider_cli.initializer import Initializer
 from piperider_cli.runner import Runner
 from piperider_cli.validator import Validator
+from piperider_cli.reconciler.reconciler import Reconciler
+from piperider_cli.reconciler.reconcile_report import ReconcileReport
 
 release_version = __version__ if sentry_env != 'development' else None
 
@@ -371,3 +373,24 @@ def login(**kwargs):
 def logout(**kwargs):
     ret = CloudConnector.logout()
     return ret
+
+@cli.command(short_help='Compare two tables and generate reconcil reports.', cls=TrackCommand)
+@click.option('--report-dir', default=None, type=click.STRING, help='Use a different report directory.')
+@click.option('--output', default=None, type=click.STRING, help='Director to save the results')
+@add_options(debug_option)
+def reconcile(**kwargs):
+    'Compare dataset defined in reconcile.yml.'
+
+    report_dir = kwargs.get('report_dir')
+    output = kwargs.get('output')
+
+    reconciler = Reconciler(engine=None)
+    ret = reconciler.reconcile(output=output, report_dir=report_dir)
+
+    if ret == 0:
+        ReconcileReport.exec(output=output, report_dir=report_dir)
+
+
+if __name__ == '__main__':
+    reconciler = Reconciler(engine=None)
+    reconciler.reconcile()
