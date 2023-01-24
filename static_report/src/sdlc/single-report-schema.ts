@@ -5,6 +5,8 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+import { number } from "zod";
+
 export interface SingleReportSchema {
   tables: {
     [k: string]: TableSchema;
@@ -338,4 +340,52 @@ export interface AssertionTest {
 export interface DataSource {
   name: string;
   type: string;
+}
+
+export interface ReconcileTableMetrics {
+  base_only: number;
+  target_only: number;
+  common: number;
+  status: boolean;
+}
+
+export interface ReconcileColumnMetrics {
+  name: string;
+  generic_type:
+    | 'string'
+    | 'numeric'
+    | 'integer'
+    | 'datetime'
+    | 'boolean'
+    | 'other';
+  base_table: string;
+  base_column: string;
+  target_table: string;
+  target_column: string;
+  base_compare_key?: string;
+  target_compare_key?: string;
+  total?: number;
+  equal_raw?: number;
+  equal_raw_percentage?: number;
+  not_equal?: number;
+  not_equal_percentage?: number;
+  not_comparable?: number;
+  /**
+   * String type reconciliation statistics
+   */
+  equal_case_insensitive?: number;
+  equal_case_insensitive_percentage?: number;
+  equal_trim_whitespace?: number;
+  equal_trim_whitespace_percentage?: number;
+  /**
+   * Number type reconciliation statistics
+   */
+  equal_within_5_difference?: number;
+  equal_within_10_difference?: number;
+  /**
+   * Datetime type reconciliation statistics
+   */
+  equal_within_1_day_difference;
+  equal_within_1_week_difference;
+  equal_within_1_month_difference;
 }

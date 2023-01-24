@@ -12,7 +12,9 @@ import {
   PATH_TO_SINGLE_REPORT_DATA_JSON,
   SINGLE_KEY,
   PATH_TO_METADATA_DATA_JSON,
+  PATH_TO_RECONCILE_REPORT_DATA_JSON,
   METADATA_KEY,
+  RECONCILE_KEY,
 } from './core.js';
 
 /**
@@ -29,6 +31,7 @@ const insertDataToHTML = async () => {
   // Read Report Data (Comparison/Single)
   log(PATH_TO_SINGLE_REPORT_DATA_JSON);
   log(PATH_TO_COMPARISON_REPORT_DATA_JSON);
+  log(PATH_TO_RECONCILE_REPORT_DATA_JSON);
 
   // Set PipeRider Metadata
   // const metadata = await getMetadata();
@@ -55,6 +58,12 @@ const insertDataToHTML = async () => {
     reportDataMap,
     PATH_TO_COMPARISON_REPORT_DATA_JSON,
     COMPARISON_KEY,
+  );
+
+  await setMapValues(
+    reportDataMap,
+    PATH_TO_RECONCILE_REPORT_DATA_JSON,
+    RECONCILE_KEY,
   );
 
   await setMapValues(reportDataMap, PATH_TO_METADATA_DATA_JSON, METADATA_KEY);

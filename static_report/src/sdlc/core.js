@@ -65,6 +65,10 @@ export const getEmbeddedIndexHTML = async (dataMap) => {
         window.PIPERIDER_COMPARISON_REPORT_DATA = ${JSON.stringify(
           dataMap.get(COMPARISON_KEY) || '',
         )};
+        // ${RECONCILE_KEY} report
+        window.PIPERIDER_RECONCILE_REPORT_DATA = ${JSON.stringify(
+          dataMap.get(RECONCILE_KEY) || '',
+        )};        
     `;
     console.log(chalk.green(`Embedded data to HTML: ${PATH_TO_INDEX}`));
     return html;
@@ -157,13 +161,19 @@ export const log = console.log;
 export const METADATA_KEY = 'metadata';
 export const SINGLE_KEY = 'single';
 export const COMPARISON_KEY = 'comparison';
+export const RECONCILE_KEY = 'reconcile';
 export const PATH_TO_INDEX = 'public/index.html';
 export const FILENAME_SINGLE = 'run.json';
 export const FILENAME_COMPARISON = 'comparison_data.json';
+export const FILENAME_RECONCILE = 'reconcile.json';
 export const MOUNT_PATH_TO_E2E_DATA = 'piperider-getting-started/.piperider';
 export const PATH_TO_SINGLE_REPORT_DATA_JSON =
   '../' +
   (isE2E ? `${MOUNT_PATH_TO_E2E_DATA}` : `.piperider`) +
   `/outputs/latest/${FILENAME_SINGLE}`;
+export const PATH_TO_RECONCILE_REPORT_DATA_JSON =
+  '../' +
+  (isE2E ? `${MOUNT_PATH_TO_E2E_DATA}` : `.piperider`) +
+  `/reconciles/latest/${FILENAME_RECONCILE}`;
 export const PATH_TO_METADATA_DATA_JSON = 'piperider-metadata.json';
 export const PATH_TO_SCHEMA_JSON = `../piperider_cli/profiler/schema.json`;
