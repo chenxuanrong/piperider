@@ -85,8 +85,10 @@
     "setup": "run-s typing:dts extract:metadata embed:html lint:fix",
     "serve:single": "dotenv -e ./build-env/.env.single craco start",
     "serve:comparison": "dotenv -e ./build-env/.env.comparison craco start",
+    "serve:reconcile": "dotenv -e ./build-env/.env.reconcile craco start",
     "start:single": "run-s setup serve:single",
     "start:comparison": "run-s setup serve:comparison",
+    "start:reconcile": "run-s setup serve:reconcile",
     "typing:dts": "npx json2ts ../piperider_cli/profiler/schema.json > src/sdlc/single-report-schema.ts",
     "typing:zts": "npx ts-to-zod src/sdlc/single-report-schema.ts src/sdlc/single-report-schema.z.ts",
     "embed:html": "node src/sdlc/embed-window-data",
@@ -139,5 +141,9 @@
     "semi": true,
     "singleQuote": true,
     "trailingComma": "all"
+  },
+  "dependencies": {
+    "@upsetjs/venn.js": "^1.4.2",
+    "d3": "^7.8.2"
   }
 }

@@ -36,5 +36,10 @@ class FileSystem:
             return os.path.join(piperider_default_report_dir, 'comparisons')
         return os.path.join(self.report_dir, 'comparisons')
 
+    def get_reconcile_dir(self):
+        if self.report_dir is None:
+           return os.path.join(piperider_default_report_dir, 'reconciles') 
+        return os.path.join(self.report_dir, 'reconciles')
+
     def get_report_dir(self):
         return self.report_dir

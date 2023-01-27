@@ -133,13 +133,16 @@ class Reconciler:
         
         filesystem = FileSystem(report_dir=report_dir)
         output_path = prepare_default_output_path(filesystem, created_at, ds=ds)
-        output_file = os.path.join(output_path, 'reconcile.json')
-
-        with open(output_file, 'w') as f:
-            f.write(json.dumps(result, indent=4))
+        reconcile_report_path = os.path.join(filesystem.get_reconcile_dir(), 'latest')
+        output_file = os.path.join(reconcile_report_path, 'reconcile.json')
 
         if output:
             clone_directory(output_path, output)
+        console.print_json()
+        console.print(f"Reconcile report: {output_file}")
+
+        with open(output_file, 'w') as f:
+            f.write(json.dumps(result, indent=4))
 
         return result
 

@@ -69,7 +69,7 @@ export default function CRColumnDetailsPage({
     },
   });
   const {
-    base: { tables: baseTables },
+    base: { tables: baseTables }, // here it renaming tables to baseTables
     input: { tables: targetTables },
   } = data;
   const [, setLocation] = useLocation();

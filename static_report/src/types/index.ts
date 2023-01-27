@@ -19,9 +19,72 @@ export interface SaferTableSchema extends Omit<TableSchema, 'columns'> {
   columns: { [k: string]: ColumnSchema | undefined };
 }
 
+export interface ReconcileColumnMetrics {
+  name: string;
+  generic_type:
+    | 'string'
+    | 'numeric'
+    | 'integer'
+    | 'datetime'
+    | 'boolean'
+    | 'other';
+  base_table: string;
+  base_column: string;
+  target_table: string;
+  target_column: string;
+  base_compare_key?: string;
+  target_compare_key?: string;
+  total?: number;
+  equal_raw?: number;
+  equal_raw_percentage?: number;
+  not_equal?: number;
+  not_equal_percentage?: number;
+  not_comparable?: number;
+  /**
+   * String type reconciliation statistics
+   */
+  equal_case_insensitive?: number;
+  equal_case_insensitive_percentage?: number;
+  equal_trim_whitespace?: number;
+  equal_trim_whitespace_percentage?: number;
+  /**
+   * Number type reconciliation statistics
+   */
+  equal_within_5_difference?: number;
+  equal_within_10_difference?: number;
+  /**
+   * Datetime type reconciliation statistics
+   */
+  equal_within_1_day_difference;
+  equal_within_1_week_difference;
+  equal_within_1_month_difference;
+}
+
+export interface ReconcileHeaderSchema {
+  name: string;
+  description?: string;
+  created?: string;
+}
+
+export interface ReconcileResults {
+  tables: ReconcileHeaderSchema;
+  columns: {
+    [k: string]: ReconcileColumnMetrics;
+  };
+}
+
 export interface ComparisonReportSchema {
   base: SaferSRSchema;
   input: SaferSRSchema;
+  summary?: ReconcileHeaderSchema;
+  reconcile?: ReconcileResults;
+}
+
+export interface ReconcileReportSchema {
+  base: SaferSRSchema;
+  input: SaferSRSchema;
+  summary?: ReconcileHeaderSchema;
+  reconcile: ReconcileResults;
 }
 
 export type ComparsionSource = 'base' | 'target';
@@ -55,6 +118,8 @@ export interface ComparableData<T> {
     deleted?: number;
     changed?: number;
   } & ComparableData<ReportAssertionStatusCounts>;
+  summary?: T;
+  reconcile?: T;
 }
 
 /**

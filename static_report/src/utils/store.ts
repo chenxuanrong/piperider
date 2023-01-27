@@ -5,10 +5,11 @@ import {
   ColumnSchema,
   ComparableData,
   ComparisonReportSchema,
+  ReconcileResults,
   SaferSRSchema,
   SaferTableSchema,
 } from '../types/index';
-import create from 'zustand';
+import { create } from 'zustand';
 import { transformAsNestedBaseTargetRecord } from './transformers';
 import { formatReportTime } from './formatters';
 import { getAssertionStatusCountsFromList } from '../components/Tables';
@@ -43,6 +44,7 @@ export interface ReportState {
    * Business Metrics (zipped 2D arrays to data column format)
    */
   BMOnly?: ComparableData<BusinessMetric[]>;
+  reconcileResult?: ReconcileResults;
 }
 
 interface ReportSetters {
@@ -51,6 +53,7 @@ interface ReportSetters {
 
 const getReportOnly = (rawData: ComparableReport) => {
   let resultObj = {} as ComparableData<Omit<SaferSRSchema, 'tables'>>;
+  // let resultObj = {};
   if (rawData.base) {
     const { tables, ...reportOnly } = rawData.base;
     resultObj = { base: reportOnly };
@@ -89,7 +92,8 @@ const getReportTitle = (rawData: ComparableReport) => {
 };
 
 /**
- * returns an aligned, compared (base/target), and normalized entries for profiler's tables and columns, making it easier to iterate and render over them. Each entry is equipped with a 3-element entry item that contains [key, {base, target}, metadata].
+ * returns an aligned, compared (base/target), and normalized entries for profiler's tables and columns, making it easier to iterate and render over them.
+ * Each entry is equipped with a 3-element entry item that contains [key, {base, target}, metadata].
  * Currently Assertions is not added to metadata yet.
  */
 const getTableColumnsOnly = (rawData: ComparableReport) => {
@@ -209,6 +213,14 @@ const getBusinessMetrics = (rawData: ComparableReport) => {
   return { base: baseBMValue, target: targetBMValue };
 };
 
+const getReconcileSummary = (rawData: ComparableReport) => {
+  if (rawData.reconcile) {
+    const { reconcile } = rawData;
+    const { tables, columns } = reconcile;
+    return { tables: tables, columns: columns };
+  }
+};
+
 export const useReportStore = create<ReportState & ReportSetters>()(function (
   set,
 ) {
@@ -230,6 +242,8 @@ export const useReportStore = create<ReportState & ReportSetters>()(function (
       const assertionsOnly = getAssertionsOnly(rawData);
       /** Report Business Metrics (BM) */
       const BMOnly = getBusinessMetrics(rawData);
+      /** Reconcile Report */
+      const reconcileResult = getReconcileSummary(rawData);
 
       const resultState: ReportState = {
         rawData,
@@ -240,6 +254,7 @@ export const useReportStore = create<ReportState & ReportSetters>()(function (
         tableColumnsOnly,
         assertionsOnly,
         BMOnly,
+        reconcileResult,
       };
 
       // final setter

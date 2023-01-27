@@ -7,6 +7,7 @@ import { Loading } from './components/Layouts/Loading';
 import { NotFound } from './components/Common/NotFound';
 import { SRTablesListPage } from './pages/SRTablesListPage';
 import { CRTablesListPage } from './pages/CRTablesListPage';
+import { RRTablesListPage } from './pages/RRTablesListPage';
 import { useHashLocation } from './hooks/useHashLcocation';
 import {
   ASSERTIONS_ROUTE_PATH,
@@ -17,6 +18,7 @@ import { SRAssertionListPage } from './pages/SRAssertionListPage';
 import { CRAssertionListPage } from './pages/CRAssertionListPage';
 import { SRBMPage } from './pages/SRBMPage';
 import { CRBMPage } from './pages/CRBMPage';
+import { VennDiagramWidget } from './components';
 
 const sentryDns = window.PIPERIDER_METADATA.sentry_dns;
 if (sentryDns && process.env.NODE_ENV !== 'development') {
@@ -39,6 +41,7 @@ if (sentryDns && process.env.NODE_ENV !== 'development') {
 
 const SRColumnDetailsPage = lazy(() => import('./pages/SRColumnDetailsPage'));
 const CRColumnDetailsPage = lazy(() => import('./pages/CRColumnDetailsPage'));
+const RRColumnDetailsPage = lazy(() => import('./pages/RRColumnDetailsPage'));
 
 function AppSingle() {
   return (
@@ -132,11 +135,50 @@ function AppComparison() {
   );
 }
 
+function AppReconcile() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Router>
+        <Switch>
+          <Route
+            path="/"
+            component={() => (
+              <RRTablesListPage data={window.PIPERIDER_RECONCILE_REPORT_DATA} />
+            )}
+          />
+
+          <Route path={COLUMN_DETAILS_ROUTE_PATH}>
+            {({ tableName, columnName }) => (
+              <RRColumnDetailsPage
+                tableName={decodeURIComponent(tableName || '')}
+                columnName={decodeURIComponent(columnName || '')}
+                ruleName="reconcile_rule"
+                data={window.PIPERIDER_RECONCILE_REPORT_DATA || {}}
+              />
+            )}
+          </Route>
+
+          {/* todo: add assertions and bm metrics for reconcile */}
+
+          <Route>
+            <NotFound />
+          </Route>
+        </Switch>
+      </Router>
+    </Suspense>
+  );
+}
+
 function App() {
-  if (process.env.REACT_APP_SINGLE_REPORT === 'true') {
-    return <AppSingle />;
-  } else {
-    return <AppComparison />;
+  switch (process.env.REACT_APP_REPORT) {
+    case 'SINGLE':
+      return <AppSingle />;
+    case 'COMPARISON':
+      return <AppComparison />;
+    case 'RECONCILE':
+      return <AppReconcile />;
+    default:
+      return <AppSingle />;
   }
 }
 

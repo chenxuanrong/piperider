@@ -4,3 +4,4 @@ export * from './DataCompositionWidget';
 export * from './DataSummaryWidget';
 export * from './DupedTableRowsWidget';
 export * from './QuantilesWidget';
+export * from './VennDiagramWidget';
