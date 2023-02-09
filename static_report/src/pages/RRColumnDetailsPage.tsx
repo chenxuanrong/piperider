@@ -1,4 +1,5 @@
 import {
+  Box,
   Divider,
   Flex,
   Grid,
@@ -17,9 +18,6 @@ import { useDocumentTitle } from '../hooks';
 import { useReportStore } from '../utils/store';
 
 import { Main } from '../components/Common/Main';
-import { DataCompositionWidget } from '../components/Widgets/DataCompositionWidget';
-import { ChartTabsWidget } from '../components/Widgets/ChartTabsWidget';
-import { ColumnDetailMasterList } from '../components/Columns/ColumnDetailMasterList/ColumnDetailMasterList';
 import {
   allContentGridTempCols,
   borderVal,
@@ -28,69 +26,78 @@ import {
 } from '../utils/layout';
 import { DataSummaryWidget } from '../components/Widgets/DataSummaryWidget';
 import { QuantilesWidget } from '../components/Widgets/QuantilesWidget';
-import { VennDiagramWidget, getIconForColumnType } from '../components';
+import {
+  DataCompositionWidget,
+  TableColumnHeader,
+  TableOverview,
+  VennDiagramWidget,
+  containsColumnQuantile,
+  containsDataSummary,
+  getIconForColumnType,
+} from '../components';
 
 import { RR_TYPE_LABEL, MASTER_LIST_SHOW_EXTRA } from '../utils';
 
 import { ReconcileRuleHeader } from '../components/Tables/ReconcileRuleHeader';
 import { ReconcileReportSchema } from '../types';
+import { ReconcileDetailMasterList } from '../components/Tables/ReconcileList/ReconcileDetailMasterList';
+import { ColumnComparisonStatsWidgets } from '../components/Widgets/ColumnComparisonStatsWidget';
 
 interface Props {
   data: ReconcileReportSchema;
-  columnName: string;
-  tableName: string;
+  reconcileName: string;
   ruleName: string;
 }
 
 export default function RRColumnDetailsPage({
   data,
-  columnName,
-  tableName,
   ruleName,
+  reconcileName,
 }: Props) {
-  useDocumentTitle('Reconcile Report: Table Column Details');
+  useDocumentTitle('Reconcile Report: Table Details');
   const {
     base: { tables: baseTables },
-    input: { tables: targetTables },
-    reconcile: { tables: tablesReconciles, columns: columnsReconciles },
+    reconcile,
   } = data;
 
   const [, setLocation] = useLocation();
   const [tabIndex, setTabIndex] = useState<number>(0);
-  const isTableDetailsView = columnName.length === 0;
+  const isTableDetailsView = ruleName.length === 0;
   const setReportData = useReportStore((s) => s.setReportRawData);
   const [showExtra] = useLocalStorage(MASTER_LIST_SHOW_EXTRA, '');
   const [extraSpace, setExtraSpace] = useState<boolean>(Boolean(showExtra));
+  console.log(isTableDetailsView);
 
   setReportData({
     base: data.base,
-    input: data.input,
     reconcile: data.reconcile,
   });
-  const {
-    tableColumnsOnly = [],
-    assertionsOnly,
-    reconcileResult,
-  } = useReportStore.getState();
-  const currentTableEntry = tableColumnsOnly.find(
-    ([tableKey]) => tableKey === tableName,
+  const { reconcileResults } = useReportStore.getState();
+  const currentReconcileEntry = reconcileResults?.find(
+    (entry) => entry.metadata.name === reconcileName,
   );
 
-  // const [, { base: baseTableColEntry, target: targetTableColEntry }, metadata] =
-  //   currentTableEntry;
-
-  const baseDataTable = baseTables[tableName];
-  const targetDataTable = targetTables[tableName];
+  const description = currentReconcileEntry?.metadata.description;
+  const baseTableName = currentReconcileEntry?.metadata.base_table || '';
+  const targetTableName = currentReconcileEntry?.metadata.target_table || '';
+  const baseDataTable = baseTables[baseTableName];
+  const targetDataTable = baseTables[targetTableName];
   const baseDataColumns = baseDataTable?.columns || {};
   const targetDataColumns = targetDataTable?.columns || {};
 
-  const baseColumnDatum = baseDataColumns[columnName];
-  const targetColumnDatum = targetDataColumns[columnName];
+  // if column rule is highlighted
+  const currentReconcileRule = currentReconcileEntry?.columns[ruleName];
+  let baseRuleColumnName = currentReconcileRule?.base_compare_key as string;
+  let targetRuleColumnName = currentReconcileRule?.target_compare_key as string;
+
+  const baseColumnDatum = baseDataColumns[baseRuleColumnName];
+  const targetColumnDatum = targetDataColumns[targetRuleColumnName];
   const fallbackColumnDatum = targetColumnDatum || baseColumnDatum;
   const { type: baseType } = baseColumnDatum || {};
   const { type: targetType } = targetColumnDatum || {};
 
   const { backgroundColor, icon } = getIconForColumnType(fallbackColumnDatum);
+  const tableMetrics = currentReconcileEntry?.tables;
 
   return (
     <Main isSingleReport={false} maxHeight={mainContentAreaHeight}>
@@ -99,47 +106,159 @@ export default function RRColumnDetailsPage({
         templateColumns={
           extraSpace ? extraSpaceAllContentGridTempCols : allContentGridTempCols
         }
-      ></Grid>
-
-      {/* Master Area */}
-      <GridItem overflowY={'scroll'} maxHeight={mainContentAreaHeight}>
-        {/* ReconcileRuleList */}
-        <ReconcileRuleHeader
-          title={ruleName}
-          subtitle={'Table'}
-          mb={5}
-          infoTip={'empty description'}
-        />
-      </GridItem>
-      {isTableDetailsView ? (
-        <GridItem maxHeight={mainContentAreaHeight} overflowY={'auto'} p={10}>
-          <TabList>
-            <Tab>Overview</Tab>
-            {/* <Tab>Assertions</Tab> */}
-            <Tab>Schema</Tab>
-          </TabList>
-          <TabPanels>
-            <TabPanel>
-              <ComparableGridHeader />
-              <Grid>
-                <VennDiagramWidget />
-              </Grid>
-            </TabPanel>
-            <TabPanel>
-              <ComparableGridHeader />
-            </TabPanel>
-            <TabPanel>
-              <ComparableGridHeader />
-            </TabPanel>
-          </TabPanels>
+      >
+        {/* Master Area */}
+        <GridItem overflowY={'scroll'} maxHeight={mainContentAreaHeight}>
+          {/* ReconcileRuleList */}
+          <ReconcileDetailMasterList
+            reconcileEntryList={reconcile}
+            reconcileEntry={currentReconcileEntry!}
+            currentReconcile={reconcileName}
+            currentRule={ruleName}
+            onSelect={({ tableName, columnName }) => {
+              setTabIndex(0);
+              setLocation(`/reconciles/${reconcileName}/rules/${ruleName}`);
+            }}
+            onNavBack={() => {
+              setLocation('/');
+            }}
+            onNavToTableDetail={(ruleName) => {
+              setLocation(`/reconciles/${reconcileName}/rules`);
+            }}
+            onToggleShowExtra={() => setExtraSpace((v) => !v)}
+          />
         </GridItem>
-      ) : (
-        <Grid>
-          <GridItem>
-            <Text color="gray.500">{'details coming soon'}</Text>
+        {/* Detail Area - Rule Details */}
+        {isTableDetailsView ? (
+          <GridItem maxHeight={mainContentAreaHeight} overflowY={'auto'} p={10}>
+            <ReconcileRuleHeader
+              title={reconcileName}
+              subtitle={'Reconcile'}
+              mb={5}
+              infoTip={description}
+            />
+            <Tabs defaultIndex={0}>
+              <TabList>
+                <Tab>Overview</Tab>
+                <Tab>Assertions</Tab>
+                <Tab>Schema</Tab>
+              </TabList>
+              <TabPanels>
+                <TabPanel>
+                  <ComparableGridHeader />
+                  <Grid templateColumns={'1fr 1px 1fr'} gap={3} p={5}>
+                    <Text align={'left'} fontSize={'sm'}>
+                      Table datamart.property_history
+                    </Text>
+                    <Divider orientation="vertical" />
+                    <Text align={'left'} fontSize={'sm'}>
+                      Table apm.property_history
+                    </Text>
+                  </Grid>
+                  a
+                  <Grid templateColumns={'1fr 1px 1fr'} gap={3}>
+                    <TableOverview
+                      tableDatum={baseDataTable}
+                      showDups={false}
+                    />
+                    <Divider orientation="vertical" />
+                    <TableOverview
+                      tableDatum={targetDataTable}
+                      showDups={false}
+                    />
+                  </Grid>
+                  <Grid templateColumns={'1fr'}>
+                    {/* <Text align={'center'} fontSize={'xl'}>
+                      Venn Diagram will show here
+                    </Text> */}
+                    <VennDiagramWidget vennChartData={tableMetrics} />
+                  </Grid>
+                </TabPanel>
+                <TabPanel>
+                  <Text> No Assertsion </Text>
+                </TabPanel>
+                <TabPanel>
+                  <Text> No information </Text>
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
           </GridItem>
-        </Grid>
-      )}
+        ) : (
+          <Grid
+            templateColumns={'1fr 1fr'}
+            width={'100%'}
+            maxHeight={mainContentAreaHeight}
+            overflowY={'auto'}
+          >
+            <GridItem colSpan={2} rowSpan={2} p={9}>
+              <TableColumnHeader
+                title={ruleName}
+                subtitle={ruleName}
+                infoTip={currentReconcileRule?.generic_type}
+                mb={5}
+                borderBottom={borderVal}
+                icon={icon}
+                iconColor={backgroundColor}
+              />
+              <ComparableGridHeader />
+              <Grid templateColumns={'1fr 1px 1fr'} gap={3} p={5}>
+                <Box>
+                  <Text align={'left'} fontSize={'sm'}>
+                    Column {currentReconcileRule?.base_compare_key}
+                  </Text>
+                  <Text>Type {currentReconcileRule?.generic_type}</Text>
+                </Box>
+                <Divider orientation="vertical" />
+                <Box>
+                  <Text align={'left'} fontSize={'sm'}>
+                    Column {currentReconcileRule?.target_compare_key}
+                  </Text>
+                  <Text>Type {currentReconcileRule?.generic_type}</Text>
+                </Box>
+              </Grid>
+            </GridItem>
+            {/* Data Composition Block */}
+            <GridItem colSpan={2} px={9} py={2} bg={'gray.50'}>
+              <Grid templateColumns={'1fr 1fr'} gap={8} minWidth={0}>
+                <DataCompositionWidget columnDatum={baseColumnDatum} />
+                <DataCompositionWidget columnDatum={targetColumnDatum} />
+              </Grid>
+            </GridItem>
+            {/* Data Summary Block */}
+            {(containsDataSummary(baseType) ||
+              containsDataSummary(targetType)) && (
+              <GridItem
+                colSpan={2}
+                gridRow={'span 1'}
+                px={9}
+                py={2}
+                bg={'gray.50'}
+              >
+                <Grid templateColumns={'1fr 1fr'} gap={8}>
+                  {<DataSummaryWidget columnDatum={baseColumnDatum} />}
+                  {<DataSummaryWidget columnDatum={targetColumnDatum} />}
+                </Grid>
+              </GridItem>
+            )}
+            {/* Quantiles Block */}
+            {(containsColumnQuantile(baseType) ||
+              containsColumnQuantile(targetType)) && (
+              <GridItem colSpan={2} gridRow={'span 1'} p={9} bg={'gray.50'}>
+                <Grid templateColumns={'1fr 1fr'} gap={8}>
+                  <QuantilesWidget columnDatum={baseColumnDatum} />
+                  <QuantilesWidget columnDatum={targetColumnDatum} />
+                </Grid>
+              </GridItem>
+            )}
+            {/* Reconcile Stats Block */}
+            <GridItem colSpan={2} gridRow={'span 1'} p={9} bg={'gray.50'}>
+              <Grid templateColumns={'1fr 1fr'} gap={8}>
+                <ColumnComparisonStatsWidgets />
+              </Grid>
+            </GridItem>
+          </Grid>
+        )}
+      </Grid>
     </Main>
   );
 }

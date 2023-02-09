@@ -1,10 +1,6 @@
-import {
-  TableActionBar,
-  TableListItem,
-  VennDiagramWidget,
-} from '../components';
+import { TableActionBar, TableListItem } from '../components';
 import { Main } from '../components/Common/Main';
-import { ComparisonReportSchema } from '../types';
+import { ComparisonReportSchema, ReconcileReportSchema } from '../types';
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Flex, Text, Grid, useDisclosure } from '@chakra-ui/react';
@@ -15,26 +11,26 @@ import { tableListGridTempCols, tableListWidth } from '../utils/layout';
 import { useReportStore } from '../utils/store';
 import { TableColumnSchemaList } from '../components/Tables/TableList/TableColumnSchemaList';
 import { CommonModal } from '../components/Common/CommonModal';
+import { useAmplitudeOnMount } from '../hooks';
+import { AMPLITUDE_EVENTS, CR_TYPE_LABEL } from '../utils';
 
-type Props = { data: ComparisonReportSchema };
+type Props = { data: ReconcileReportSchema };
 
 export function RRTablesListPage({ data }: Props) {
   useDocumentTitle('Reconcile Report: Tables');
-  // useAmplitudeOnMount({
-  //   eventName: AMPLITUDE_EVENTS.PAGE_VIEW,
-  //   eventProperties: {
-  //     type: CR_TYPE_LABEL,
-  //     page: 'table-list-page',
-  //   },
-  // });
+  useAmplitudeOnMount({
+    eventName: AMPLITUDE_EVENTS.PAGE_VIEW,
+    eventProperties: {
+      type: CR_TYPE_LABEL,
+      page: 'table-list-page',
+    },
+  });
   const modal = useDisclosure();
   const [tableColsEntryId, setTableColsEntryId] = useState(-1);
   const [, setLocation] = useLocation();
   const setReportData = useReportStore((s) => s.setReportRawData);
-  setReportData({ base: data.base, input: data.input });
-  // todo: push reconcile date to state
-  const { tableColumnsOnly: tableColEntries = [], assertionsOnly } =
-    useReportStore.getState();
+  setReportData({ base: data.base, reconcile: data.reconcile });
+  const { reconcileResults = [], assertionsOnly } = useReportStore.getState();
 
   return (
     <Main isSingleReport={false}>
@@ -44,14 +40,14 @@ export function RRTablesListPage({ data }: Props) {
           <Text>Name</Text>
           <Text>Summary</Text>
         </Grid>
-        {tableColEntries.map((tableColEntry, i) => {
+        {reconcileResults.map((reconcileEntry, i) => {
           return (
             <Flex key={i}>
               <TableListItem
                 combinedAssertions={assertionsOnly}
-                combinedTableEntry={tableColEntry}
+                reconcileListEntry={reconcileEntry}
                 onSelect={() =>
-                  setLocation(`/tables/${tableColEntry[0]}/columns/`)
+                  setLocation(`/reconciles/${reconcileEntry.name}/rules/`)
                 }
                 onInfoClick={() => {
                   setTableColsEntryId(i);
@@ -66,7 +62,9 @@ export function RRTablesListPage({ data }: Props) {
       <CommonModal
         {...modal}
         size="2xl"
-        title={tableColsEntryId !== -1 && tableColEntries[tableColsEntryId][0]}
+        title={
+          tableColsEntryId !== -1 && reconcileResults[tableColsEntryId].name
+        }
         onClose={() => {
           setTableColsEntryId(-1);
           modal.onClose();
@@ -75,16 +73,17 @@ export function RRTablesListPage({ data }: Props) {
         <Text fontSize="lg" mb={4}>
           Description:{' '}
           {(tableColsEntryId !== -1 &&
-            tableColEntries[tableColsEntryId][1].target?.description) ?? (
+            reconcileResults[tableColsEntryId].metadata?.description) ?? (
             <Text as="i">No description provided.</Text>
           )}
         </Text>
-        {tableColsEntryId !== -1 && (
+        {/* todo: show a summary of reconcile? */}
+        {/* {tableColsEntryId !== -1 && (
           <TableColumnSchemaList
-            baseTableEntryDatum={tableColEntries[tableColsEntryId][1].base}
-            targetTableEntryDatum={tableColEntries[tableColsEntryId][1].target}
+            baseTableEntryDatum={reconcileResults[tableColsEntryId][1].base}
+            targetTableEntryDatum={reconcileResults[tableColsEntryId][1].target}
           />
-        )}
+        )} */}
       </CommonModal>
     </Main>
   );

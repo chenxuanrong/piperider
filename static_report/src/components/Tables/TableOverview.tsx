@@ -6,17 +6,24 @@ import { TableGeneralStats } from './TableMetrics/TableGeneralStats';
 
 interface Props {
   tableDatum?: SaferTableSchema;
+  showDups?: boolean;
 }
 
-export function TableOverview({ tableDatum, ...props }: Props & BoxProps) {
+export function TableOverview({
+  tableDatum,
+  showDups = true,
+  ...props
+}: Props & BoxProps) {
   return (
     <Grid mb={8} gap={8} {...props}>
       <GridItem colSpan={1}>
         <TableGeneralStats tableDatum={tableDatum} />
       </GridItem>
-      <GridItem>
-        <DupedTableRowsWidget tableDatum={tableDatum} />
-      </GridItem>
+      {showDups && (
+        <GridItem>
+          <DupedTableRowsWidget tableDatum={tableDatum} />
+        </GridItem>
+      )}
     </Grid>
   );
 }

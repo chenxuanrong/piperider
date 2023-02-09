@@ -5,6 +5,7 @@ import {
   ColumnSchema,
   ComparableData,
   ComparisonReportSchema,
+  ReconcileReportSchema,
   ReconcileResults,
   SaferSRSchema,
   SaferTableSchema,
@@ -13,7 +14,8 @@ import { create } from 'zustand';
 import { transformAsNestedBaseTargetRecord } from './transformers';
 import { formatReportTime } from './formatters';
 import { getAssertionStatusCountsFromList } from '../components/Tables';
-type ComparableReport = Partial<ComparisonReportSchema>; //to support single-run data structure
+type ComparableReport = Partial<ComparisonReportSchema> &
+  Partial<ReconcileReportSchema>; //to support single-run data structure
 type ComparableMetadata = {
   added?: number;
   deleted?: number;
@@ -44,7 +46,7 @@ export interface ReportState {
    * Business Metrics (zipped 2D arrays to data column format)
    */
   BMOnly?: ComparableData<BusinessMetric[]>;
-  reconcileResult?: ReconcileResults;
+  reconcileResults?: ReconcileResults[];
 }
 
 interface ReportSetters {
@@ -213,12 +215,9 @@ const getBusinessMetrics = (rawData: ComparableReport) => {
   return { base: baseBMValue, target: targetBMValue };
 };
 
-const getReconcileSummary = (rawData: ComparableReport) => {
-  if (rawData.reconcile) {
-    const { reconcile } = rawData;
-    const { tables, columns } = reconcile;
-    return { tables: tables, columns: columns };
-  }
+const getReconcile = (rawData: ComparableReport) => {
+  const { reconcile } = rawData;
+  return reconcile ?? [];
 };
 
 export const useReportStore = create<ReportState & ReportSetters>()(function (
@@ -243,7 +242,7 @@ export const useReportStore = create<ReportState & ReportSetters>()(function (
       /** Report Business Metrics (BM) */
       const BMOnly = getBusinessMetrics(rawData);
       /** Reconcile Report */
-      const reconcileResult = getReconcileSummary(rawData);
+      const reconcileResults = getReconcile(rawData);
 
       const resultState: ReportState = {
         rawData,
@@ -254,7 +253,7 @@ export const useReportStore = create<ReportState & ReportSetters>()(function (
         tableColumnsOnly,
         assertionsOnly,
         BMOnly,
-        reconcileResult,
+        reconcileResults,
       };
 
       // final setter

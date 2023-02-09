@@ -9,6 +9,7 @@ import {
   SingleReportSchema,
   TableSchema,
 } from '../sdlc/single-report-schema';
+import { StringifyContext } from 'yaml/dist/stringify/stringify';
 
 export * from '../sdlc';
 
@@ -28,12 +29,13 @@ export interface ReconcileColumnMetrics {
     | 'datetime'
     | 'boolean'
     | 'other';
+  description?: string;
   base_table: string;
   base_column: string;
   target_table: string;
   target_column: string;
-  base_compare_key?: string;
-  target_compare_key?: string;
+  base_compare_key: string;
+  target_compare_key: string;
   total?: number;
   equal_raw?: number;
   equal_raw_percentage?: number;
@@ -55,36 +57,47 @@ export interface ReconcileColumnMetrics {
   /**
    * Datetime type reconciliation statistics
    */
-  equal_within_1_day_difference;
-  equal_within_1_week_difference;
-  equal_within_1_month_difference;
+  equal_within_1_day_difference?: number;
+  equal_within_1_week_difference?: number;
+  equal_within_1_month_difference?: number;
 }
 
-export interface ReconcileHeaderSchema {
+export interface ReconcileTableMetrics {
+  base_only: number;
+  target_only: number;
+  common: number;
+  not_comparable?: number;
+  status?: boolean;
+}
+
+export interface ReconcileMetadata {
   name: string;
   description?: string;
-  created?: string;
+  base_table: string;
+  base_column: string;
+  target_table: string;
+  target_column: string;
 }
 
 export interface ReconcileResults {
-  tables: ReconcileHeaderSchema;
+  name: string;
+  metadata: ReconcileMetadata;
+  tables: ReconcileTableMetrics;
   columns: {
     [k: string]: ReconcileColumnMetrics;
   };
 }
 
+export interface ReconcileReportSchema {
+  id: string;
+  created: string;
+  base: SaferSRSchema;
+  reconcile: ReconcileResults[];
+}
+
 export interface ComparisonReportSchema {
   base: SaferSRSchema;
   input: SaferSRSchema;
-  summary?: ReconcileHeaderSchema;
-  reconcile?: ReconcileResults;
-}
-
-export interface ReconcileReportSchema {
-  base: SaferSRSchema;
-  input: SaferSRSchema;
-  summary?: ReconcileHeaderSchema;
-  reconcile: ReconcileResults;
 }
 
 export type ComparsionSource = 'base' | 'target';
@@ -93,9 +106,13 @@ export type Selectable = {
   onSelect: ({
     tableName,
     columnName,
+    reconcileName,
+    ruleName,
   }: {
     tableName?: string;
     columnName?: string;
+    reconcileName?: string;
+    ruleName?: string;
   }) => void;
 };
 
@@ -118,8 +135,7 @@ export interface ComparableData<T> {
     deleted?: number;
     changed?: number;
   } & ComparableData<ReportAssertionStatusCounts>;
-  summary?: T;
-  reconcile?: T;
+  reconcile?: ReconcileResults;
 }
 
 /**
