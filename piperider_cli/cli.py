@@ -377,15 +377,17 @@ def logout(**kwargs):
 @cli.command(short_help='Compare two tables and generate reconcil reports.', cls=TrackCommand)
 @click.option('--report-dir', default=None, type=click.STRING, help='Use a different report directory.')
 @click.option('--output', default=None, type=click.STRING, help='Director to save the results')
+@click.option('--project', default=None, type=click.STRING, help='Project name')
 @add_options(debug_option)
 def reconcile(**kwargs):
     'Compare dataset defined in reconcile.yml.'
 
     report_dir = kwargs.get('report_dir')
     output = kwargs.get('output')
+    project = kwargs.get('project')
 
     reconciler = Reconciler(engine=None)
-    ret = reconciler.reconcile(output=output, report_dir=report_dir)
+    ret = reconciler.reconcile(output=output, report_dir=report_dir, project=project)
 
     if ret == 0:
         ReconcileReport.exec(output=output, report_dir=report_dir)

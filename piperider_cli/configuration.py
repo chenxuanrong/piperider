@@ -213,44 +213,45 @@ class Configuration(object):
             with open(piperider_reconcile_path, 'r') as frecon:
                 r_config = yaml.safe_load(frecon)
 
-            reconcile_config = r_config.get('Reconciles')
-            if reconcile_config:
-                reconcile_source_name = reconcile_config.get('source')
-                reconcile_set_name = reconcile_config.get('name')
-                base_table = reconcile_config.get('base', {}).get('table')
-                base_join_key = reconcile_config.get('base', {}).get('join_key')
+            r_definitions = r_config.get('Reconciles')
+            if r_definitions:
+                for reconcile_config in r_definitions:
+                    reconcile_source_name = reconcile_config.get('source')
+                    reconcile_set_name = reconcile_config.get('name')
+                    base_table = reconcile_config.get('base', {}).get('table')
+                    base_join_key = reconcile_config.get('base', {}).get('join_key')
 
-                target_table = reconcile_config.get('target', {}).get('table')
-                target_join_key = reconcile_config.get('target', {}).get('join_key')
+                    target_table = reconcile_config.get('target', {}).get('table')
+                    target_join_key = reconcile_config.get('target', {}).get('join_key')
 
-                rules = []
-                for r in reconcile_config.get('rules', []):
-                    rule_name = r.get('name')
-                    if not rule_name:
-                        raise ReconcileRuleAssertionError()
+                    rules = []
+                    for r in reconcile_config.get('rules', []):
+                        rule_name = r.get('name')
+                        if not rule_name:
+                            raise ReconcileRuleAssertionError()
 
-                    c_rule = ColumnReconcileRule(
-                        base_column=base_join_key,
-                        target_column=target_join_key,
-                        base_compare_key=r.get('base_column'),
-                        target_compare_key=r.get('target_column'),
-                        name=rule_name,
-                        description=r.get('description'),
+                        c_rule = ColumnReconcileRule(
+                            base_column=base_join_key,
+                            target_column=target_join_key,
+                            base_compare_key=r.get('base_column'),
+                            target_compare_key=r.get('target_column'),
+                            name=rule_name,
+                            description=r.get('description'),
+                        )
+
+                        rules.append(c_rule)
+
+                    reconcile_rules.append(
+                        ReconcileRule(
+                            source=reconcile_source_name,
+                            name=reconcile_set_name,
+                            base_table=base_table,
+                            target_table=target_table,
+                            base_join_key=base_join_key,
+                            target_join_key=target_join_key,
+                            column_reconcile_rules=rules
+                        )
                     )
-
-                    rules.append(c_rule)
-
-                reconcile_rules.append(
-                    ReconcileRule(
-                        source=reconcile_source_name,
-                        name=reconcile_set_name,
-                        base_table=base_table,
-                        target_table=target_table,
-                        base_join_key=base_join_key,
-                        target_join_key=target_join_key,
-                        column_reconcile_rules=rules
-                    )
-                )
 
 
         return cls(
@@ -409,6 +410,11 @@ tables:
         if datasource in self.dataSources:
             self.dataSources.remove(datasource)
 
+    def get_reconcile_rule_by_name(self, name):
+        for rule in self.reconcileRules:
+            if rule.name == name:
+                return rule            
+
 
 def _load_dbt_profile(path):
     from jinja2 import Environment, FileSystemLoader
@@ -463,3 +469,5 @@ def _load_credential_from_dbt_profile(dbt_profile, profile_name, target_name):
         dbname = credential.get('dbname')
         credential['endpoint'] = f'{host}:{port}/{dbname}'
     return credential
+
+

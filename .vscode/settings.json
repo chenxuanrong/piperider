@@ -1,0 +1,8 @@
+{
+  "typescript.tsdk": "static_report/node_modules/typescript/lib",
+  "colorize.languages": [
+    "javascript",
+    "typescriptreact",
+    "typescript",
+  ]  
+}

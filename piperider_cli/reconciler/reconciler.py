@@ -25,7 +25,7 @@ class Reconciler:
     def __init__(self, engine: Engine=None):
         self.engine = engine
 
-    def reconcile(self, output=None, report_dir=None) -> dict:
+    def reconcile(self, output=None, report_dir=None, project=None) -> dict:
 
         # base_table: str, target_table: str, base_col: str, target_col: str, rules: List[ColumnReconcileRule],
 
@@ -57,7 +57,11 @@ class Reconciler:
         console.rule("Validating")
 
         # TODO: starts with single reconciliation if there are multiple rules
-        rule = configuration.reconcileRules[0]
+        
+        if project:
+            rule = configuration.get_reconcile_rule_by_name(project)
+        else:
+            rule = configuration.reconcileRules[0] 
 
         datasource = rule.source
         if datasource and datasource not in datasource_names:
@@ -134,6 +138,8 @@ class Reconciler:
         filesystem = FileSystem(report_dir=report_dir)
         output_path = prepare_default_output_path(filesystem, created_at, ds=ds)
         reconcile_report_path = os.path.join(filesystem.get_reconcile_dir(), 'latest')
+        if not os.path.exists(reconcile_report_path):
+            os.makedirs(reconcile_report_path)
         output_file = os.path.join(reconcile_report_path, 'reconcile.json')
 
         if output:

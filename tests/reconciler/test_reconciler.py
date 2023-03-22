@@ -169,3 +169,4 @@ class TestReconciler(TestCase):
         assert result["not_comparable"] == 1
         assert result["not_comparable"] + result["equal"] + result["not_equal"] == result["total"]
         assert result["equal_percentage"] == 0.33
+
