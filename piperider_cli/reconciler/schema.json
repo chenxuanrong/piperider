@@ -2,19 +2,13 @@
   "title": "ReconcileReportSchema",
   "type": "object",
   "required": [
-    "reconcile",
+    "id",
     "base",
-    "created_at",
-    "id"
+    "reconcile",
+    "created_at"
   ],
   "properties": {
-    "metadata_version": {
-      "type": "string"
-    },
     "created_at": {
-      "type": "string"
-    },
-    "version": {
       "type": "string"
     },
     "id": {

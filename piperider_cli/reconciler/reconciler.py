@@ -151,7 +151,7 @@ class Reconciler:
             "target_column": rule_target_column,
         }
         result["reconcile"]["name"] = rule_name
-        result["created"] = created_at.isoformat()
+        result["created_at"] = created_at.isoformat()
         result["id"] = run_id
         decorate_with_metadata(result["base"])
 
