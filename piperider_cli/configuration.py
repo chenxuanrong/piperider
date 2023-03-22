@@ -223,6 +223,7 @@ class Configuration(object):
 
                     target_table = reconcile_config.get('target', {}).get('table')
                     target_join_key = reconcile_config.get('target', {}).get('join_key')
+                    description = reconcile_config.get('description')
 
                     rules = []
                     for r in reconcile_config.get('rules', []):
@@ -244,6 +245,7 @@ class Configuration(object):
                     reconcile_rules.append(
                         ReconcileRule(
                             source=reconcile_source_name,
+                            description=description,
                             name=reconcile_set_name,
                             base_table=base_table,
                             target_table=target_table,

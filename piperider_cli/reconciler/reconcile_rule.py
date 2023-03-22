@@ -23,6 +23,7 @@ class ReconcileRule:
     base_join_key: str
     target_join_key: str
     column_reconcile_rules: List[ColumnReconcileRule]
+    description: str = None
 
     def validate(self):
         reasons = []

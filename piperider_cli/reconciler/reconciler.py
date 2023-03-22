@@ -13,8 +13,13 @@ from piperider_cli.reconciler.reconcile_rule import ColumnReconcileRule, Reconci
 from piperider_cli.configuration import Configuration
 from piperider_cli import raise_exception_when_directory_not_writable, clone_directory
 from piperider_cli.error import PipeRiderCredentialFieldError, UnhandableColumnTypeError
-from piperider_cli.runner import RichProfilerEventHandler, prepare_default_output_path
+from piperider_cli.runner import (
+    RichProfilerEventHandler, 
+    prepare_default_output_path, 
+    decorate_with_metadata,
+)
 from piperider_cli.filesystem import FileSystem
+
 
 
 class Reconciler:
@@ -33,12 +38,9 @@ class Reconciler:
         raise_exception_when_directory_not_writable(output)
 
         result = {
-            "dataSource": {},
-            "tables": {},
-            "metrics": {
-                "tables": {},
-                "columns": {},
-            },
+            "id": "",
+            "base": {},
+            "reconcile": {},        
         }
 
         # Datasource
@@ -62,6 +64,14 @@ class Reconciler:
             rule = configuration.get_reconcile_rule_by_name(project)
         else:
             rule = configuration.reconcileRules[0] 
+
+        rule_name = rule.name
+        rule_metadata = rule.name
+        rule_description = rule.description
+        rule_base_table = rule.base_table
+        rule_base_column = rule.base_join_key
+        rule_target_table = rule.target_table
+        rule_target_column = rule.target_join_key
 
         datasource = rule.source
         if datasource and datasource not in datasource_names:
@@ -107,7 +117,8 @@ class Reconciler:
         # except Exception as e:
         #     raise Exception(f'Profiler Exception: {type(e).__name__}(\'{e}\')')
 
-        result["tables"].update(profile_result)
+        # result["tables"].update(profile_result)
+        result["base"]["tables"] = profile_result.get("tables")
 
         # Reconciling
         console.rule("Reconciling")
@@ -126,11 +137,23 @@ class Reconciler:
 
         trecon = self._reconcile_table(base_table, target_table, base_col, target_col)
 
-        result["metrics"]["tables"].update(trecon)
+        result["reconcile"]["tables"] = trecon
 
         crecon = self._reconcile_column(base_table, target_table, base_col, target_col, rules)
 
-        result["metrics"]["columns"].update(crecon)
+        result["reconcile"]["columns"] = crecon
+        result["reconcile"]["metadata"] =  {
+            "name": rule_name,
+            "description": rule_description,
+            "base_table": rule_base_table,
+            "base_column": rule_base_column,
+            "target_table": rule_target_table,
+            "target_column": rule_target_column,
+        }
+        result["reconcile"]["name"] = rule_name
+        result["created"] = created_at.isoformat()
+        result["id"] = run_id
+        decorate_with_metadata(result["base"])
 
         console.rule('Summary')
         # TODO: Implement summary presentation funciton
@@ -148,7 +171,7 @@ class Reconciler:
         console.print(f"Reconcile report: {output_file}")
 
         with open(output_file, 'w') as f:
-            f.write(json.dumps(result, indent=4))
+            f.write(json.dumps(result, indent=2))
 
         return result
 
