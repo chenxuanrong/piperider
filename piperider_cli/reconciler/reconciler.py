@@ -3,7 +3,6 @@ import os
 import uuid
 from dataclasses import dataclass
 
-from rich import console
 from rich.console import Console, escape
 from sqlalchemy.engine import Connection, Engine, create_engine
 from sqlalchemy import Table, Column, text
@@ -28,18 +27,24 @@ class Reconciler:
     """
 
     def __init__(self, engine: Engine=None):
-        self.engine = engine
+        """
+        :param engine: sqlalchemy engine
+        """
+        self.bengine = engine
+        self.tengine = engine
+        
 
     def reconcile(self, output=None, report_dir=None, project=None) -> dict:
-
-        # base_table: str, target_table: str, base_col: str, target_col: str, rules: List[ColumnReconcileRule],
+        """
+        Reconcile two tables
+        """
 
         console = Console()
         raise_exception_when_directory_not_writable(output)
 
         result = {
             "id": "",
-            "base": {},
+            "profiling": {},
             "reconcile": {},        
         }
 
@@ -73,24 +78,28 @@ class Reconciler:
         rule_target_table = rule.target_table
         rule_target_column = rule.target_join_key
 
-        datasource = rule.source
-        if datasource and datasource not in datasource_names:
-            console.print(f"[bold red]Error: datasource '{datasource}' doesn't exist[/bold red]")
-            console.print(f"Available datasources: {', '.join(datasource_names)}")
-            return 1
+        # datasource = rule.source
+        base_source = rule.base_source
+        target_source = base_source if rule.base_source == rule.target_source else rule.target_source
+        is_same_source = (base_source == target_source)
+        for src in [base_source, target_source]:
+            if src not in datasource_names:
+                console.print(f"[bold red]Error: datasource '{src}' doesn't exist[/bold red]")
+                console.print(f"Available datasources: {', '.join(datasource_names)}")
+                return 1
 
-        ds = datasources[datasource]
+        for src in [base_source, target_source]:
+            ds = datasources[src]
+            passed, _ = ds.validate()
+            if passed is not True:
+                raise PipeRiderCredentialFieldError(ds.name)
 
-        passed, _ = ds.validate()
-        if passed is not True:
-            raise PipeRiderCredentialFieldError(ds.name)
-
-        err = ds.verify_connector()
-        if err:
-            console.print(
-                f'[[bold red]FAILED[/bold red]] Failed to load the \'{ds.type_name}\' connector. Reason: {err}')
-            console.print(f'\n{escape(err.hint)}\n')
-            return 1
+            err = ds.verify_connector()
+            if err:
+                console.print(
+                    f'[[bold red]FAILED[/bold red]] Failed to load the \'{ds.type_name}\' connector. Reason: {err}')
+                console.print(f'\n{escape(err.hint)}\n')
+                return 1
 
         stop_reconciler = rule.validate()
         if not stop_reconciler:
@@ -102,43 +111,82 @@ class Reconciler:
         console.rule("Profiling")
         run_id = uuid.uuid4().hex
         created_at = datetime.utcnow()
-        engine = create_engine(ds.to_database_url(), **ds.engine_args())
+        
+        bds = datasources[base_source]
+        tds = datasources[target_source]
 
-        # TODO: change this line
-        self.engine = engine
 
-        tables = self._get_table_list(rule)
+        # To enable target and source from different database/schema
+        if is_same_source:
+            engine = create_engine(bds.to_database_url(), **bds.engine_args())
 
-        profiler = Profiler(engine, RichProfilerEventHandler(tables))
-        # try:
-        schema = inspect(engine).default_schema_name
+            # TODO: change this line
+            self.bengine = engine
+            self.tengine = engine
 
-        profile_result = profiler.profile([ProfileSubject(table, schema, table) for table in tables])
-        # except Exception as e:
-        #     raise Exception(f'Profiler Exception: {type(e).__name__}(\'{e}\')')
+            base_table, target_table = self._get_table_list(rule)
 
-        # result["tables"].update(profile_result)
-        result["base"]["tables"] = profile_result.get("tables")
+            profiler = Profiler(engine, RichProfilerEventHandler([base_table, target_table]))
+            # try:
+            schema = inspect(engine).default_schema_name
+
+            bprofile_result = profiler.profile(ProfileSubject(base_table, schema, base_table))
+            result["profiling"]["base"] = bprofile_result.get("tables")
+
+            tprofile_result = profiler.profile(ProfileSubject(target_table, schema, target_table))
+            result["profiling"]["target"] = tprofile_result.get("tables")
+
+            tables_dict['base_table'] = profiler._fetch_table_metadata(ProfileSubject(base_table, schema, target_table), reflecting_cache={})
+            tables_dict['target_table'] = profiler._fetch_table_metadata(ProfileSubject(target_table, schema, target_table), reflecting_cache={})
+        
+        else:
+            bengine = create_engine(bds.to_database_url(), **bds.engine_args())
+            tengine = create_engine(tds.to_database_url(), **tds.engine_args())
+            self.bengine = bengine
+            self.tengine = tengine
+
+            bprofilers = Profiler(bengine, RichProfilerEventHandler([rule.base_table]))
+            tprofilers = Profiler(tengine, RichProfilerEventHandler([rule.target_table]))
+            bschema = inspect(bengine).default_schema_name
+            tschema = inspect(tengine).default_schema_name
+            b_profiler_result = bprofilers.profile([ProfileSubject(rule.base_table, bschema, rule.base_table)])
+            t_profiler_result = tprofilers.profile([ProfileSubject(rule.target_table, tschema, rule.target_table)])
+            result["profiling"]["base"] = b_profiler_result.get("tables")
+            result["profiling"]["target"] = t_profiler_result.get("tables")
+            base_table, target_table = self._get_table_list(rule)
+
+            tables_dict = {}
+            # TODO: differentiat table name with schema/database
+            tables_dict['base_table'] = bprofilers._fetch_table_metadata(ProfileSubject(base_table, bschema, base_table), reflecting_cache={})
+            tables_dict['target_table'] = tprofilers._fetch_table_metadata(ProfileSubject(target_table, tschema, target_table), reflecting_cache={})
+    
 
         # Reconciling
         console.rule("Reconciling")
         
-        tables_dict = {}
-        for table in tables:
-            tables_dict[table] = profiler._fetch_table_metadata(ProfileSubject(table, schema, table), reflecting_cache={})
+        # tables_dict = {}
+        # for table in tables:
+        #     tables_dict[table] = profiler._fetch_table_metadata(ProfileSubject(table, schema, table), reflecting_cache={})
         
 
-        # Use sqlalchmey Table type generated by Profiler
-        base_table: Table = tables_dict[rule.base_table]
-        target_table: Table = tables_dict[rule.target_table]
+        # Use sqlalchmey Table type generated by Profiles
+        base_table: Table = tables_dict['base_table']
+        target_table: Table = tables_dict['target_table']
         base_col = base_table.columns[rule.base_join_key]
         target_col = target_table.columns[rule.target_join_key]
         rules = rule.column_reconcile_rules
 
-        trecon = self._reconcile_table(base_table, target_table, base_col, target_col)
+        console.rule("Reconciling Tables Stats")
+        trecon = self._reconcile_table(
+            base_table, 
+            target_table, 
+            base_col, 
+            target_col,
+        )
 
         result["reconcile"]["tables"] = trecon
 
+        console.rule("Reconciling Columns Stats")
         crecon = self._reconcile_column(base_table, target_table, base_col, target_col, rules)
 
         result["reconcile"]["columns"] = crecon
@@ -153,7 +201,7 @@ class Reconciler:
         result["reconcile"]["name"] = rule_name
         result["created_at"] = created_at.isoformat()
         result["id"] = run_id
-        decorate_with_metadata(result["base"])
+        decorate_with_metadata(result["profiling"])
 
         console.rule('Summary')
         # TODO: Implement summary presentation funciton
@@ -179,18 +227,23 @@ class Reconciler:
                          base_table: Table,
                          target_table: Table,
                          base_col: Column,
-                         target_col: Column
+                         target_col: Column,
+                         base_database: str=None,
+                         target_database: str=None,
                          ):
+        
+        base_db = self.bengine.url.database.split('/')[0]
+        target_db = self.tengine.url.database.split('/')[0]   
 
         result = reconcile_table_counts(
-            self.engine,
+            self.bengine,
             base_table,
             target_table,
             base_col=base_col,
             target_col=target_col,
+            base_database=base_db,
+            target_database=target_db,
         )
-
-        print('Table reconciling')
 
         return result
 
@@ -204,9 +257,13 @@ class Reconciler:
 
         result = {}
 
+        base_db = self.bengine.url.database.split('/')[0]
+        target_db = self.tengine.url.database.split('/')[0]
+
         index = 0
         for rule in rules:
 
+            # TODO: implement progress bar
             print(f'[{index+1}/{len(rules)}] {rule.name}')
 
             # Loop through base and target column data type to dispath to specific column reconciler
@@ -221,24 +278,35 @@ class Reconciler:
                 # TEXT
                 # CLOB
                 generic_type = "string"
-                reconciler = StringColumnReconciler(self.engine, base_table, target_table, base_column, target_column, base_compare_key, target_compare_key, rule_name)
+                reconciler = StringColumnReconciler(
+                    self.bengine, 
+                    base_table, 
+                    target_table, 
+                    base_column, 
+                    target_column, 
+                    base_compare_key, 
+                    target_compare_key, 
+                    rule_name,
+                    base_database=base_db,
+                    target_database=target_db,
+                )
             elif isinstance(base_compare_key.type, Integer) and isinstance(target_compare_key.type, Integer):
                 # INTEGER
                 # BIGINT
                 # SMALLINT
                 generic_type = "integer"
-                reconciler = NumericColumnReconciler(self.engine, base_table, target_table, base_column, target_column, base_compare_key, target_compare_key, rule_name)
+                reconciler = NumericColumnReconciler(self.bengine, base_table, target_table, base_column, target_column, base_compare_key, target_compare_key, rule_name, base_db, target_db)
             elif isinstance(base_compare_key.type, Numeric) and isinstance(target_compare_key.type, Numeric):
                 # NUMERIC
                 # DECIMAL
                 # FLOAT
                 generic_type = "numeric"
-                reconciler = NumericColumnReconciler(self.engine, base_table, target_table, base_column, target_column, base_compare_key, target_compare_key, rule_name)
+                reconciler = NumericColumnReconciler(self.bengine, base_table, target_table, base_column, target_column, base_compare_key, target_compare_key, rule_name, base_db, target_db)
             elif isinstance(base_compare_key.type, (Date, DateTime)) and isinstance(target_compare_key.type, (Date, DateTime)):
                 # DATE
                 # DATETIME
                 generic_type = "datetime"
-                reconciler = DatetimeColumnReconciler(self.engine, base_table, target_table, base_column, target_column, base_compare_key, target_compare_key, rule_name)
+                reconciler = DatetimeColumnReconciler(self.bengine, base_table, target_table, base_column, target_column, base_compare_key, target_compare_key, rule_name, base_db, target_db)
             elif base_compare_key.type != target_compare_key.type:
                 reconciler = MismatchDataTypeColumnReconciler()
             else:
@@ -255,7 +323,7 @@ class Reconciler:
 
         base_table = rule.base_table
         target_table = rule.target_table
-        return [base_table, target_table]
+        return base_table, target_table
 
 
 class ColumnReconciler(object):
@@ -264,7 +332,7 @@ class ColumnReconciler(object):
     """
 
     def __init__(self,
-                 engine: Engine,
+                 bengine: Engine,
                  base_table: Table,
                  target_table: Table,
                  base_col: Column,
@@ -273,8 +341,10 @@ class ColumnReconciler(object):
                  target_compare_col: Column,
                  name: str,
                  metadata: str = None,
+                 base_database: str = None,
+                 target_database: str = None
          ):
-        self.engine = engine
+        self.bengine = bengine
         self.base_table = base_table
         self.target_table = target_table
         self.base_col = base_col
@@ -283,13 +353,15 @@ class ColumnReconciler(object):
         self.target_compare_col = target_compare_col
         self.metadata = metadata
         self.name = name
+        self.base_database = base_database
+        self.target_database = target_database
 
     def _get_database_backend(self) -> str:
         """
         Helper function to return the sqlalchemy engine backend
         :return:
         """
-        return self.engine.url.get_backend_name()
+        return self.bengine.url.get_backend_name()
 
     def _base_cte(self, bkey, bcompkey, tkey, tcompkey) -> str:
         if self._get_database_backend() == 'sqlite':
@@ -298,13 +370,13 @@ class ColumnReconciler(object):
                     select
                         {bkey} as bid,
                         {bcompkey} as bcid
-                    from {self.base_table}
+                    from {self.base_database}.{self.base_table.schema}.{self.base_table.name}
                 ),
                 t as (
                     select
                         {tkey} as tid,
                         {tcompkey} as tcid
-                    from {self.target_table}
+                    from {self.target_database}.{self.target_table.schema}.{self.target_table.name}
                 ),
                 fjoin as (
                     select
@@ -328,13 +400,13 @@ class ColumnReconciler(object):
                     select
                         {bkey} as bid,
                         {bcompkey} as bcid
-                    from {self.base_table}
+                    from {self.base_database}.{self.base_table.schema}.{self.base_table.name}
                 ),
                 t as (
                     select
                         {tkey} as tid,
                         {tcompkey} as tcid
-                    from {self.target_table}
+                    from {self.target_database}.{self.target_table.schema}.{self.target_table.name}
                 ),
                 fjoin as (
                     select bid, bcid, tid, tcid
@@ -363,8 +435,10 @@ class StringColumnReconciler(ColumnReconciler):
                  base_compare_col: Column,
                  target_compare_col: Column,
                  name: str,
+                 base_database: str = None,
+                 target_database: str = None,
                  ):
-        super().__init__(engine, base_table, target_table, base_col, target_col, base_compare_col, target_compare_col, name=name)
+        super().__init__(engine, base_table, target_table, base_col, target_col, base_compare_col, target_compare_col, name=name, base_database=base_database, target_database=target_database)
 
     def reconcile(self) -> dict:
         # string type data comparison should consists of
@@ -377,7 +451,7 @@ class StringColumnReconciler(ColumnReconciler):
         bcompkey = self.base_compare_col.name
         tcompkey = self.target_compare_col.name
 
-        with self.engine.connect() as conn:
+        with self.bengine.connect() as conn:
 
             cte = super()._base_cte(bkey, bcompkey, tkey, tcompkey)
             query = f"""
@@ -438,9 +512,10 @@ class NumericColumnReconciler(ColumnReconciler):
                  base_compare_col: Column,
                  target_compare_col: Column,
                  name: str,
+                 base_database: str = None,
+                 target_database: str = None,
                  ):
-        super().__init__(engine, base_table, target_table, base_col, target_col, base_compare_col,
-                         target_compare_col, name=name)
+        super().__init__(engine, base_table, target_table, base_col, target_col, base_compare_col, target_compare_col, name=name, base_database=base_database, target_database=target_database)
 
     def reconcile(self) -> dict:
 
@@ -450,7 +525,7 @@ class NumericColumnReconciler(ColumnReconciler):
         tcompkey = self.target_compare_col.name
         cte = super()._base_cte(bkey, bcompkey, tkey, tcompkey)
 
-        with self.engine.connect() as conn:
+        with self.bengine.connect() as conn:
 
             query = f"""
                 {cte}
@@ -507,9 +582,11 @@ class DatetimeColumnReconciler(ColumnReconciler):
                  base_compare_col: Column,
                  target_compare_col: Column,
                  name: str,
+                 base_database: str = None,
+                 target_database: str = None,
                  ):
-        super().__init__(engine, base_table, target_table, base_col, target_col, base_compare_col,
-                         target_compare_col, name=name)
+        super().__init__(engine, base_table, target_table, base_col, target_col, base_compare_col, target_compare_col, name=name, base_database=base_database, target_database=target_database)
+
 
     def reconcile(self) -> dict:
         bkey = self.base_col.name
@@ -518,7 +595,7 @@ class DatetimeColumnReconciler(ColumnReconciler):
         tcompkey = self.target_compare_col.name
         cte = super()._base_cte(bkey, bcompkey, tkey, tcompkey)
 
-        with self.engine.connect() as conn:
+        with self.bengine.connect() as conn:
             # https://www.sqlite.org/lang_datefunc.html
             if super()._get_database_backend() == "sqlite":
                 query = f"""
@@ -568,6 +645,10 @@ class DatetimeColumnReconciler(ColumnReconciler):
 
 
 class MismatchDataTypeColumnReconciler:
+    """
+    This class is used to reconcile columns with mismatched data types (e.g. int vs. string)
+    It may invlove some type conversion before comparison
+    """
 
     def reconcile(self) -> dict:
         raise NotImplementedError
@@ -578,18 +659,20 @@ def reconcile_table_counts(
     base_table: Table,
     target_table: Table,
     base_col: Column,
-    target_col: Column
+    target_col: Column,
+    base_database: str=None,
+    target_database: str=None,
 ) -> dict:
 
     with engine.connect() as conn:
 
         if base_table.schema:
-            _base_table = f"{base_table.schema}.{base_table.name}"
+            _base_table = f"{base_database}.{base_table.schema}.{base_table.name}"
         else:
             _base_table = base_table.name
 
         if target_table.schema:
-            _target_table = f"{target_table.schema}.{target_table.name}"
+            _target_table = f"{target_database}.{target_table.schema}.{target_table.name}"
         else:
             _target_table = target_table.name
 

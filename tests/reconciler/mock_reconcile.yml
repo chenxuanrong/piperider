@@ -1,0 +1,16 @@
+Reconciles:
+- name: reconcile 
+  base:
+    source: base_source 
+    table: base_table 
+    join_key: id
+  target:
+    source: target_source 
+    table: target_table
+    join_key: id
+  
+  rules:
+    - name: price 
+      description: Compare sale price across two versions
+      base_column: sale_price_display
+      target_column: sale_price_display

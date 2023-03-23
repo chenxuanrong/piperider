@@ -17,7 +17,8 @@ class ColumnReconcileRule:
 class ReconcileRule:
 
     name: str
-    source: str
+    base_source: str
+    target_source: str
     base_table: str
     target_table: str
     base_join_key: str

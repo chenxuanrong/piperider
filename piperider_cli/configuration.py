@@ -216,8 +216,10 @@ class Configuration(object):
             r_definitions = r_config.get('Reconciles')
             if r_definitions:
                 for reconcile_config in r_definitions:
-                    reconcile_source_name = reconcile_config.get('source')
+                    # reconcile_source_name = reconcile_config.get('source')
                     reconcile_set_name = reconcile_config.get('name')
+                    base_source = reconcile_config.get('base', {}).get('source')
+                    target_source = reconcile_config.get('target', {}).get('source')
                     base_table = reconcile_config.get('base', {}).get('table')
                     base_join_key = reconcile_config.get('base', {}).get('join_key')
 
@@ -244,7 +246,8 @@ class Configuration(object):
 
                     reconcile_rules.append(
                         ReconcileRule(
-                            source=reconcile_source_name,
+                            base_source=base_source,
+                            target_source=target_source,
                             description=description,
                             name=reconcile_set_name,
                             base_table=base_table,

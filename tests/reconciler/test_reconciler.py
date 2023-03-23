@@ -1,8 +1,11 @@
 from datetime import date, datetime
 from unittest import TestCase
 from typing import List
+import os.path
 
 from sqlalchemy import *
+
+from piperider_cli.configuration import Configuration 
 
 from piperider_cli.reconciler.reconciler import (
     Reconciler,
@@ -39,10 +42,20 @@ class TestReconciler(TestCase):
         ]
         self.base_table = self.db.create_table("test1", data1)
         self.target_table = self.db.create_table("test2", data2)
+        self.reconcile_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mock_reconcile.yml")
 
     def tearDown(self) -> None:
         self.base_table.drop(self.engine)
         self.target_table.drop(self.engine)
+
+
+    def test_parse_base_and_target_source(self) -> None:
+        configuration = Configuration.load(piperider_reconcile_path=self.reconcile_config_file)
+        bsource = configuration.reconcileRules[0].base_source
+        tsource = configuration.reconcileRules[0].target_source
+        assert bsource == "base_source"
+        assert tsource == "target_source"
+        
 
     def test_table_reconcile(self):
         """
@@ -60,7 +73,7 @@ class TestReconciler(TestCase):
         assert result["common"] == 2
         assert result["base_only"] == 0
         assert result["target_only"] == 1
-        assert result["status"] == False
+        assert result["status"] == False        
 
     def test_column_reconcile_age(self):
         """

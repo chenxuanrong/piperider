@@ -3,7 +3,7 @@
   "type": "object",
   "required": [
     "id",
-    "base",
+    "profiling",
     "reconcile",
     "created_at"
   ],
@@ -14,10 +14,13 @@
     "id": {
       "type": "string"
     },
-    "base": {
+    "profiling": {
       "type": "object",
       "properties": {
-        "tables:": {
+        "base": {
+          "type": "object"
+        },
+        "target": {
           "type": "object"
         },
         "id": {

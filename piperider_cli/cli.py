@@ -395,4 +395,4 @@ def reconcile(**kwargs):
 
 if __name__ == '__main__':
     reconciler = Reconciler(engine=None)
-    reconciler.reconcile()
+    reconciler.reconcile(project='pipeline_v2')
