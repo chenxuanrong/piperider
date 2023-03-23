@@ -116,6 +116,7 @@ class Reconciler:
         tds = datasources[target_source]
 
 
+        tables_dict = {}
         # To enable target and source from different database/schema
         if is_same_source:
             engine = create_engine(bds.to_database_url(), **bds.engine_args())
@@ -130,12 +131,12 @@ class Reconciler:
             # try:
             schema = inspect(engine).default_schema_name
 
-            bprofile_result = profiler.profile(ProfileSubject(base_table, schema, base_table))
+            bprofile_result = profiler.profile([ProfileSubject(base_table, schema, base_table)])
             result["profiling"]["base"] = bprofile_result.get("tables")
 
-            tprofile_result = profiler.profile(ProfileSubject(target_table, schema, target_table))
+            tprofile_result = profiler.profile([ProfileSubject(target_table, schema, target_table)])
             result["profiling"]["target"] = tprofile_result.get("tables")
-
+            
             tables_dict['base_table'] = profiler._fetch_table_metadata(ProfileSubject(base_table, schema, target_table), reflecting_cache={})
             tables_dict['target_table'] = profiler._fetch_table_metadata(ProfileSubject(target_table, schema, target_table), reflecting_cache={})
         
@@ -155,7 +156,6 @@ class Reconciler:
             result["profiling"]["target"] = t_profiler_result.get("tables")
             base_table, target_table = self._get_table_list(rule)
 
-            tables_dict = {}
             # TODO: differentiat table name with schema/database
             tables_dict['base_table'] = bprofilers._fetch_table_metadata(ProfileSubject(base_table, bschema, base_table), reflecting_cache={})
             tables_dict['target_table'] = tprofilers._fetch_table_metadata(ProfileSubject(target_table, tschema, target_table), reflecting_cache={})
