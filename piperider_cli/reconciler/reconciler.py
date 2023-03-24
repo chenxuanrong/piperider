@@ -207,11 +207,8 @@ class Reconciler:
         # TODO: Implement summary presentation funciton
         
         filesystem = FileSystem(report_dir=report_dir)
-        output_path = prepare_default_output_path(filesystem, created_at, ds=ds)
-        reconcile_report_path = os.path.join(filesystem.get_reconcile_dir(), 'latest')
-        if not os.path.exists(reconcile_report_path):
-            os.makedirs(reconcile_report_path)
-        output_file = os.path.join(reconcile_report_path, 'reconcile.json')
+        output_path = prepare_default_output_path(filesystem, created_at, ds=ds, task="reconcile")
+        output_file = os.path.join(output_path, 'reconcile.json')
 
         if output:
             clone_directory(output_path, output)
