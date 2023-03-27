@@ -29,8 +29,12 @@ export function RRTablesListPage({ data }: Props) {
   const [tableColsEntryId, setTableColsEntryId] = useState(-1);
   const [, setLocation] = useLocation();
   const setReportData = useReportStore((s) => s.setReportRawData);
-  setReportData({ base: data.base, reconcile: data.reconcile });
-  const { reconcileResults = [], assertionsOnly } = useReportStore.getState();
+  setReportData({
+    profiling: data.profiling,
+    reconcile: data.reconcile,
+    created_at: data.created_at,
+  });
+  const { reconcileResults, assertionsOnly } = useReportStore.getState();
 
   return (
     <Main isSingleReport={false}>
@@ -40,7 +44,22 @@ export function RRTablesListPage({ data }: Props) {
           <Text>Name</Text>
           <Text>Summary</Text>
         </Grid>
-        {reconcileResults.map((reconcileEntry, i) => {
+
+        <Flex key={reconcileResults.title}>
+          <TableListItem
+            combinedAssertions={assertionsOnly}
+            reconcileListEntry={reconcileResults}
+            onSelect={() =>
+              setLocation(`/reconciles/${reconcileResults.title}/rules/`)
+            }
+            onInfoClick={() => {
+              setTableColsEntryId(reconcileResults.title);
+              modal.onOpen();
+            }}
+          />
+        </Flex>
+
+        {/* {reconcileResults.map((reconcileEntry, i) => {
           return (
             <Flex key={i}>
               <TableListItem
@@ -56,7 +75,7 @@ export function RRTablesListPage({ data }: Props) {
               />
             </Flex>
           );
-        })}
+        })} */}
       </Flex>
 
       <CommonModal

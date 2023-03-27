@@ -35,10 +35,21 @@ const reconcileMetricsDescrption = {
   within_1_day_difference: 'Date or datetime data when equal within 1 day',
   within_1_week_difference: 'Date or datetime data when equal within 1 week',
   within_1_month_difference: 'Date or datetime data when equal within 1 month',
+  equal_case_insensitive: 'Equal when case insensitive',
+  equal_trim_whitespace: 'Equal when white space is trimmed',
 };
 
+export interface MetricEntry {
+  name: string;
+  firstSlot?: string | number;
+  secondSlot?: string | number;
+  firstSlotWidth?: string;
+  secondSlotWidth?: string;
+  metaKey?: string;
+}
+
 interface Props {
-  columnStats?: ColumnComparisonStatsSchema;
+  columnStats?: MetricEntry[];
   hasAnimation?: boolean;
 }
 
@@ -48,19 +59,19 @@ export interface ReconcileMetricsProps {
   secondSlot?: string | number;
   firstSlotWidth?: string;
   secondSlotWidth?: string;
-  metakey?: keyof ColumnComparisonStatsSchema;
+  metaKey?: string;
 }
 
 export function ReconcileMetricsInfo({
   name,
   firstSlot,
   secondSlot,
-  firstSlotWidth = '100px',
-  secondSlotWidth = '100px',
-  metakey,
+  firstSlotWidth = '100%',
+  secondSlotWidth = '100%',
+  metaKey,
   ...props
 }: ReconcileMetricsProps & FlexProps) {
-  const metaDescription = reconcileMetricsDescrption[metakey || ''];
+  const metaDescription = reconcileMetricsDescrption[metaKey || ''];
   const { width, ...restProps } = props;
   const isTargetNull = secondSlot === null;
   return (
@@ -96,27 +107,25 @@ export function ColumnComparisonStatsWidgets({
     <>
       <Text fontSize={'xl'}>Reconcile Statistics</Text>
       <Divider my={3} />
-      <ReconcileMetricsInfo
-        name="Total"
-        firstSlot="199660"
-        secondSlot="100%"
-        metakey="total"
-        width={'100%'}
-      />
-      <ReconcileMetricsInfo
-        name="Equal Case Insensitive"
-        firstSlot="199660"
-        secondSlot="100%"
-        metakey="equal_case_insensitive"
-        width={'100%'}
-      />
-      <ReconcileMetricsInfo
-        name="Equal whitespace trimmed"
-        firstSlot="5000"
-        secondSlot="15.5%"
-        metakey="equal_trim_whitespace"
-        width={'100%'}
-      />
+      {/* loop column stats and return ReconcileMetricsInfo component 
+      columnStats = [
+        {name: "total", "firstSlot": "199660", "secondSlot": "100%", metaKey: "total"},
+        {name: "equal_case_insensitive", "firstSlot": "199660", "secondSlot": "100%", metaKey: "equal_case_insensitive"},
+        {name: "equal_trim_whitespace", "firstSlot": "5000", "secondSlot": "15.5%", metaKey: "equal_trim_whitespace"}
+      ]
+      
+      */}
+      {columnStats?.map(({ firstSlot, secondSlot, metaKey, name }, i) => {
+        return (
+          <ReconcileMetricsInfo
+            key={i}
+            name={name}
+            firstSlot={firstSlot}
+            secondSlot={secondSlot}
+            metaKey={metaKey}
+          />
+        );
+      })}
     </>
   );
 }

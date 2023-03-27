@@ -28,7 +28,8 @@ export interface ReconcileColumnMetrics {
     | 'integer'
     | 'datetime'
     | 'boolean'
-    | 'other';
+    | 'other'
+    | 'date';
   description?: string;
   base_table: string;
   base_column: string;
@@ -88,11 +89,20 @@ export interface ReconcileResults {
   };
 }
 
+export interface ReconcileProfilingSchema {
+  base: TableSchema;
+  target: TableSchema;
+  version: string;
+  project_id: string;
+  user_id: string;
+  metadata_version: string;
+}
 export interface ReconcileReportSchema {
+  // maps to reconcile.json structure
   id: string;
-  created: string;
-  base: SaferSRSchema;
-  reconcile: ReconcileResults[];
+  created_at: string;
+  profiling: ReconcileProfilingSchema; // table profiling result, same in run
+  reconcile: ReconcileResults; // reconciliation result
 }
 
 export interface ComparisonReportSchema {

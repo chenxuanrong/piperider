@@ -51,7 +51,7 @@ export function TableListItem({
 
   const description = fallbackTable?.description || NO_DESCRIPTION_MSG;
 
-  const reconcileName = reconcileListEntry?.name;
+  const reconcileName = reconcileListEntry?.metadata.name;
   const reconcileDescription = reconcileListEntry?.metadata?.description;
 
   if (combinedTableEntry) {

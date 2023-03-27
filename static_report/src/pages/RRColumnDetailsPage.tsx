@@ -34,12 +34,13 @@ import {
   containsColumnQuantile,
   containsDataSummary,
   getIconForColumnType,
+  MetricsInfo,
 } from '../components';
 
 import { RR_TYPE_LABEL, MASTER_LIST_SHOW_EXTRA } from '../utils';
 
 import { ReconcileRuleHeader } from '../components/Tables/ReconcileRuleHeader';
-import { ReconcileReportSchema } from '../types';
+import { ReconcileColumnMetrics, ReconcileReportSchema } from '../types';
 import { ReconcileDetailMasterList } from '../components/Tables/ReconcileList/ReconcileDetailMasterList';
 import { ColumnComparisonStatsWidgets } from '../components/Widgets/ColumnComparisonStatsWidget';
 
@@ -56,7 +57,7 @@ export default function RRColumnDetailsPage({
 }: Props) {
   useDocumentTitle('Reconcile Report: Table Details');
   const {
-    base: { tables: baseTables },
+    profiling: { base: baseTables, target: targetTables },
     reconcile,
   } = data;
 
@@ -69,13 +70,16 @@ export default function RRColumnDetailsPage({
   console.log(isTableDetailsView);
 
   setReportData({
-    base: data.base,
+    // base: baseTables,
+    // target: targetTables,
+    profiling: data.profiling,
     reconcile: data.reconcile,
   });
   const { reconcileResults } = useReportStore.getState();
-  const currentReconcileEntry = reconcileResults?.find(
-    (entry) => entry.metadata.name === reconcileName,
-  );
+  // const currentReconcileEntry = reconcileResults?.find(
+  //   (entry) => entry.metadata.name === reconcileName,
+  // );
+  const currentReconcileEntry = reconcileResults;
 
   const description = currentReconcileEntry?.metadata.description;
   const baseTableName = currentReconcileEntry?.metadata.base_table || '';
@@ -87,6 +91,10 @@ export default function RRColumnDetailsPage({
 
   // if column rule is highlighted
   const currentReconcileRule = currentReconcileEntry?.columns[ruleName];
+  console.log(ruleName);
+  // console.log(currentReconcileEntry.columns);
+  console.log(currentReconcileRule);
+
   let baseRuleColumnName = currentReconcileRule?.base_compare_key as string;
   let targetRuleColumnName = currentReconcileRule?.target_compare_key as string;
 
@@ -98,6 +106,127 @@ export default function RRColumnDetailsPage({
 
   const { backgroundColor, icon } = getIconForColumnType(fallbackColumnDatum);
   const tableMetrics = currentReconcileEntry?.tables;
+  const columnMetrics = currentReconcileEntry.columns[ruleName];
+  const transformColumnMetrics = (data: ReconcileColumnMetrics) => {
+    if (data.generic_type == 'string') {
+      let result;
+      result = [
+        {
+          name: 'total',
+          firstSlot: data.total,
+          secondSlot: '100%',
+          metaKey: 'total',
+        },
+        {
+          name: 'equal_raw',
+          firstSlot: data.equal_raw,
+          secondSlot: data.equal_raw_percentage,
+          metaKey: 'equal_raw',
+        },
+        {
+          name: 'equal_case_insensitive',
+          firstSlot: data.equal_case_insensitive,
+          secondSlot: data.equal_case_insensitive_percentage,
+          metaKey: 'equal_case_insensitive',
+        },
+        {
+          name: 'equal_trim_whitespace',
+          firstSlot: data.equal_trim_whitespace,
+          secondSlot: data.equal_trim_whitespace_percentage,
+          metaKey: 'equal_trim_whitespace',
+        },
+      ];
+      return result;
+    }
+    if (data.generic_type === 'numeric' || data.generic_type === 'integer') {
+      let result = [
+        {
+          name: 'total',
+          firstSlot: data.total,
+          secondSlot: '100%',
+          metaKey: 'total',
+        },
+        {
+          name: 'equal_raw',
+          firstSlot: data.equal_raw,
+          secondSlot: data.equal_raw_percentage,
+          metaKey: 'equal_raw',
+        },
+        {
+          name: 'equal_withiin_5_difference',
+          firstSlot: data.equal_within_5_difference,
+          secondSlot: data.equal_within_5_difference ?? 0 / (data.total ?? 1),
+          metaKey: 'equal_within_5_difference',
+        },
+        {
+          name: 'equal_withiin_5_difference',
+          firstSlot: data.equal_within_10_difference,
+          secondSlot: data.equal_within_10_difference ?? 0 / (data.total ?? 1),
+          metaKey: 'equal_within_5_difference',
+        },
+      ];
+      return result;
+    }
+    if (data.generic_type === 'date' || data.generic_type === 'datetime') {
+      let result = [
+        {
+          name: 'total',
+          firstSlot: data.total,
+          secondSlot: '100%',
+          metaKey: 'total',
+        },
+        {
+          name: 'equal_raw',
+          firstSlot: data.equal_raw,
+          secondSlot: data.equal_raw_percentage,
+          metaKey: 'equal_raw',
+        },
+        {
+          name: 'equal_within_1_day_difference',
+          firstSlot: data.equal_within_1_day_difference,
+          secondSlot:
+            data.equal_within_1_day_difference ?? 0 / (data.total ?? 1),
+          metaKey: 'equal_within_1_day_difference',
+        },
+        {
+          name: 'equal_within_1_week_difference',
+          firstSlot: data.equal_within_1_week_difference,
+          secondSlot:
+            data.equal_within_1_week_difference ?? 0 / (data.total ?? 1),
+          metaKey: 'equal_within_1_week_difference',
+        },
+        {
+          name: 'equal_within_1_month_difference',
+          firstSlot: data.equal_within_1_month_difference,
+          secondSlot:
+            data.equal_within_1_month_difference ?? 0 / (data.total ?? 1),
+          metaKey: 'equal_within_1_month_difference',
+        },
+      ];
+      return result;
+    }
+  };
+
+  // const columnCompMetrics = [
+  //   {
+  //     name: 'total',
+  //     firstSlot: '199660',
+  //     secondSlot: '100%',
+  //     metaKey: 'total',
+  //   },
+  //   {
+  //     name: 'equal_case_insensitive',
+  //     firstSlot: '199660',
+  //     secondSlot: '100%',
+  //     metaKey: 'equal_case_insensitive',
+  //   },
+  //   {
+  //     name: 'equal_trim_whitespace',
+  //     firstSlot: '5000',
+  //     secondSlot: '15.5%',
+  //     metaKey: 'equal_trim_whitespace',
+  //   },
+  // ];
 
   return (
     <Main isSingleReport={false} maxHeight={mainContentAreaHeight}>
@@ -115,7 +244,7 @@ export default function RRColumnDetailsPage({
             reconcileEntry={currentReconcileEntry!}
             currentReconcile={reconcileName}
             currentRule={ruleName}
-            onSelect={({ tableName, columnName }) => {
+            onSelect={({ reconcileName, ruleName }) => {
               setTabIndex(0);
               setLocation(`/reconciles/${reconcileName}/rules/${ruleName}`);
             }}
@@ -123,7 +252,7 @@ export default function RRColumnDetailsPage({
               setLocation('/');
             }}
             onNavToTableDetail={(ruleName) => {
-              setLocation(`/reconciles/${reconcileName}/rules`);
+              setLocation(`/reconciles/${reconcileName}/rules/`);
             }}
             onToggleShowExtra={() => setExtraSpace((v) => !v)}
           />
@@ -147,15 +276,34 @@ export default function RRColumnDetailsPage({
                 <TabPanel>
                   <ComparableGridHeader />
                   <Grid templateColumns={'1fr 1px 1fr'} gap={3} p={5}>
-                    <Text align={'left'} fontSize={'sm'}>
-                      Table datamart.property_history
-                    </Text>
+                    <Flex flexDirection={'row'} alignItems={'center'}>
+                      <Text
+                        width={'8em'}
+                        align={'left'}
+                        fontSize={'sm'}
+                        fontWeight={'700'}
+                      >
+                        Table
+                      </Text>
+                      <Text textAlign={'right'} fontSize={'sm'} width={'100%'}>
+                        {baseTableName}
+                      </Text>
+                    </Flex>
                     <Divider orientation="vertical" />
-                    <Text align={'left'} fontSize={'sm'}>
-                      Table apm.property_history
-                    </Text>
+                    <Flex flexDirection={'row'} alignItems={'center'}>
+                      <Text
+                        width={'8em'}
+                        align={'left'}
+                        fontSize={'sm'}
+                        fontWeight={'700'}
+                      >
+                        Table
+                      </Text>
+                      <Text textAlign={'right'} fontSize={'sm'} width={'100%'}>
+                        {baseTableName}
+                      </Text>
+                    </Flex>
                   </Grid>
-                  a
                   <Grid templateColumns={'1fr 1px 1fr'} gap={3}>
                     <TableOverview
                       tableDatum={baseDataTable}
@@ -202,19 +350,39 @@ export default function RRColumnDetailsPage({
               />
               <ComparableGridHeader />
               <Grid templateColumns={'1fr 1px 1fr'} gap={3} p={5}>
-                <Box>
-                  <Text align={'left'} fontSize={'sm'}>
-                    Column {currentReconcileRule?.base_compare_key}
+                <Flex flexDirection={'row'} alignItems={'center'}>
+                  <Text
+                    width={'8em'}
+                    align={'left'}
+                    fontSize={'sm'}
+                    fontWeight={'700'}
+                  >
+                    Column
                   </Text>
-                  <Text>Type {currentReconcileRule?.generic_type}</Text>
-                </Box>
+                  <Text textAlign={'right'} fontSize={'m'} width={'75%'}>
+                    {currentReconcileRule?.base_compare_key}
+                  </Text>
+                  <Text textAlign={'right'} fontSize={'m'} width={'25%'}>
+                    {currentReconcileRule?.generic_type}
+                  </Text>
+                </Flex>
                 <Divider orientation="vertical" />
-                <Box>
-                  <Text align={'left'} fontSize={'sm'}>
-                    Column {currentReconcileRule?.target_compare_key}
+                <Flex flexDirection={'row'} alignItems={'center'}>
+                  <Text
+                    width={'8em'}
+                    align={'left'}
+                    fontSize={'sm'}
+                    fontWeight={'700'}
+                  >
+                    Column
                   </Text>
-                  <Text>Type {currentReconcileRule?.generic_type}</Text>
-                </Box>
+                  <Text textAlign={'right'} fontSize={'m'} width={'75%'}>
+                    {currentReconcileRule?.target_compare_key}
+                  </Text>
+                  <Text textAlign={'right'} fontSize={'m'} width={'25%'}>
+                    {currentReconcileRule?.generic_type}
+                  </Text>
+                </Flex>
               </Grid>
             </GridItem>
             {/* Data Composition Block */}
@@ -253,7 +421,10 @@ export default function RRColumnDetailsPage({
             {/* Reconcile Stats Block */}
             <GridItem colSpan={2} gridRow={'span 1'} p={9} bg={'gray.50'}>
               <Grid templateColumns={'1fr 1fr'} gap={8}>
-                <ColumnComparisonStatsWidgets />
+                <ColumnComparisonStatsWidgets
+                  columnStats={transformColumnMetrics(columnMetrics)}
+                  hasAnimation={false}
+                />
               </Grid>
             </GridItem>
           </Grid>

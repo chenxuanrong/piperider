@@ -13,14 +13,14 @@ interface Props extends Selectable, Comparable {
   currentReconcile: string;
   currentRule: string;
   reconcileEntry: ReconcileResults;
-  reconcileEntryList: ReconcileResults[];
+  reconcileEntryList: ReconcileResults;
   onNavBack?: () => void;
   onNavToTableDetail?: (reconcileName: string) => void;
   onToggleShowExtra?: () => void;
 }
 
 export function ReconcileDetailMasterList({
-  reconcileEntryList = [],
+  reconcileEntryList,
   reconcileEntry,
   currentReconcile,
   currentRule,
@@ -49,6 +49,7 @@ export function ReconcileDetailMasterList({
           mb={9}
           defaultValue={currentReconcile}
           onChange={(evt) => {
+            console.log(evt.target.value);
             if (evt.target.value === 'table-list' && onNavBack) {
               onNavBack();
             } else if (onNavToTableDetail) {
@@ -57,12 +58,16 @@ export function ReconcileDetailMasterList({
           }}
         >
           <option value={'table-list'}>← Show All Reconcile Reports</option>
-          {reconcileEntryList.map((entry, index) => (
-            <option value={entry.name} key={index}>
-              {entry.name}
+          <option value={reconcileEntryList.name} key={reconcileEntryList.name}>
+            {reconcileEntryList.name}
+          </option>
+          {/* {Object.keys(reconcileEntryList).map((entry, index) => (
+            <option value={entry} key={index}>
+              {entry}
             </option>
-          ))}
+          ))} */}
         </Select>
+
         {/* Header */}
         <Flex justifyContent={'space-between'} mb={2}>
           <Text color={'gray.500'} size={'md'}>
@@ -80,7 +85,7 @@ export function ReconcileDetailMasterList({
           color={isActive ? 'white' : 'inherit'}
           _hover={{ bgColor: isActive ? 'piperider.500' : 'blackAlpha.50' }}
           onClick={() => {
-            onSelect({ tableName: currentReconcile, columnName: '' });
+            onSelect({ reconcileName: currentReconcile, ruleName: '' });
           }}
         >
           <Flex alignItems={'center'} gap={2} fontSize={'sm'}>
@@ -88,6 +93,7 @@ export function ReconcileDetailMasterList({
             <Text noOfLines={1}>{currentReconcile}</Text>
           </Flex>
         </Flex>
+
         {/* Rules Header */}
         <Flex justifyContent={'space-between'} alignItems={'center'}>
           <Text fontSize={'md'} color={'gray.500'}>

@@ -18,6 +18,7 @@ interface Props extends Comparable, Selectable {
 }
 
 export function ReconcileDetailListItem({
+  reconcileName,
   ruleName,
   schemaType,
   onSelect,
@@ -33,7 +34,7 @@ export function ReconcileDetailListItem({
       justifyContent={'space-between'}
       alignItems={'center'}
       cursor={'pointer'}
-      onClick={() => onSelect({ reconcileName: '', ruleName: '' })}
+      onClick={() => onSelect({ reconcileName, ruleName })}
       color={isActive ? 'white' : 'inherit'}
       bg={isActive ? 'piperider.400' : 'inherit'}
       _hover={{ bgColor: isActive ? 'piperider.500' : 'blackAlpha.50' }}

@@ -13,7 +13,10 @@ import {
 import { create } from 'zustand';
 import { transformAsNestedBaseTargetRecord } from './transformers';
 import { formatReportTime } from './formatters';
-import { getAssertionStatusCountsFromList } from '../components/Tables';
+import {
+  ColumnName,
+  getAssertionStatusCountsFromList,
+} from '../components/Tables';
 type ComparableReport = Partial<ComparisonReportSchema> &
   Partial<ReconcileReportSchema>; //to support single-run data structure
 type ComparableMetadata = {
@@ -46,7 +49,7 @@ export interface ReportState {
    * Business Metrics (zipped 2D arrays to data column format)
    */
   BMOnly?: ComparableData<BusinessMetric[]>;
-  reconcileResults?: ReconcileResults[];
+  reconcileResults?: any;
 }
 
 interface ReportSetters {
@@ -91,6 +94,25 @@ const getReportTitle = (rawData: ComparableReport) => {
   const title = targetName ?? baseName;
 
   return title;
+};
+
+const getReconcile = (rawData: ComparableReport) => {
+  const reconcile = rawData.reconcile;
+  // get profiling results, seems different to base/input, need to figure out
+  // a way to fit into existed code
+  const profiling = rawData.profiling;
+
+  const title = reconcile?.metadata?.name ?? '';
+  const metadata = reconcile?.metadata;
+  const tables = reconcile?.tables;
+  const columns = reconcile?.columns;
+  const resultObj = {
+    title: title,
+    metadata: metadata,
+    tables: tables,
+    columns: columns,
+  };
+  return resultObj;
 };
 
 /**
@@ -215,11 +237,6 @@ const getBusinessMetrics = (rawData: ComparableReport) => {
   return { base: baseBMValue, target: targetBMValue };
 };
 
-const getReconcile = (rawData: ComparableReport) => {
-  const { reconcile } = rawData;
-  return reconcile ?? [];
-};
-
 export const useReportStore = create<ReportState & ReportSetters>()(function (
   set,
 ) {
@@ -243,6 +260,7 @@ export const useReportStore = create<ReportState & ReportSetters>()(function (
       const BMOnly = getBusinessMetrics(rawData);
       /** Reconcile Report */
       const reconcileResults = getReconcile(rawData);
+      /** Reconcile Profiling */
 
       const resultState: ReportState = {
         rawData,
