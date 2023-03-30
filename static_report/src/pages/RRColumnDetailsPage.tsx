@@ -207,27 +207,6 @@ export default function RRColumnDetailsPage({
     }
   };
 
-  // const columnCompMetrics = [
-  //   {
-  //     name: 'total',
-  //     firstSlot: '199660',
-  //     secondSlot: '100%',
-  //     metaKey: 'total',
-  //   },
-  //   {
-  //     name: 'equal_case_insensitive',
-  //     firstSlot: '199660',
-  //     secondSlot: '100%',
-  //     metaKey: 'equal_case_insensitive',
-  //   },
-  //   {
-  //     name: 'equal_trim_whitespace',
-  //     firstSlot: '5000',
-  //     secondSlot: '15.5%',
-  //     metaKey: 'equal_trim_whitespace',
-  //   },
-  // ];
-
   return (
     <Main isSingleReport={false} maxHeight={mainContentAreaHeight}>
       <Grid
