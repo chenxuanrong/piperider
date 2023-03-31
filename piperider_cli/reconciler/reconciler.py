@@ -8,7 +8,7 @@ from sqlalchemy.engine import Connection, Engine, create_engine
 from sqlalchemy import Table, Column, text
 
 from piperider_cli.profiler.profiler import *
-from piperider_cli.reconciler.reconcile_rule import ColumnReconcileRule, ReconcileRule
+from piperider_cli.reconciler.reconcile_rule import ColumnReconcileRule, ReconcileSuite, ReconcileProject
 from piperider_cli.configuration import Configuration
 from piperider_cli import raise_exception_when_directory_not_writable, clone_directory
 from piperider_cli.error import PipeRiderCredentialFieldError, UnhandableColumnTypeError
@@ -49,8 +49,13 @@ class Reconciler:
 
         result = {
             "id": "",
-            "profiling": {},
-            "reconcile": {},
+            "project": "",
+            "description": "",
+            "profiling": {
+                "base": {},
+                "target": {},
+            },
+            "reconcile": [],
         }
 
         # Datasource
@@ -71,24 +76,23 @@ class Reconciler:
         # TODO: starts with single reconciliation if there are multiple rules
 
         if project:
-            rule = configuration.get_reconcile_rule_by_name(project)
+            r_project: ReconcileProject = configuration.get_reconcile_project(project)
         else:
-            rule = configuration.reconcileRules[0]
+            r_project: ReconcileProject = configuration.reconcileRules[0]
 
-        rule_name = rule.name
-        rule_metadata = rule.name
-        rule_description = rule.description
-        rule_base_table = rule.base_table
-        rule_base_column = rule.base_join_key
-        rule_target_table = rule.target_table
-        rule_target_column = rule.target_join_key
+        project_name = r_project.name
+        project_description = r_project.description
+        suites = r_project.suites
+        # rule_base_table = r_project.base_table
+        # rule_base_column = r_project.base_join_key
+        # rule_target_table = r_project.target_table
+        # rule_target_column = r_project.target_join_key
 
-        # datasource = rule.source
-        base_source = rule.base_source
+        base_source = r_project.base_source
         target_source = (
             base_source
-            if rule.base_source == rule.target_source
-            else rule.target_source
+            if r_project.base_source == r_project.target_source
+            else r_project.target_source
         )
         is_same_source = base_source == target_source
         for src in [base_source, target_source]:
@@ -113,12 +117,13 @@ class Reconciler:
                 console.print(f"\n{escape(err.hint)}\n")
                 return 1
 
-        stop_reconciler = rule.validate()
+        stop_reconciler, _reasons = r_project.validate()
         if not stop_reconciler:
             # TODO: provide validating error details
             console.print(
                 "\n\n[bold red]ERROR:[/bold red] Stop reconciler, please fix the syntax errors above."
             )
+            [console.print(f" - {r}") for r in _reasons]
             return 1
 
         # Profile
@@ -129,132 +134,165 @@ class Reconciler:
         bds = datasources[base_source]
         tds = datasources[target_source]
 
+        tables_to_profile = {
+            "base": [s.base_table for s in suites],
+            "target": [s.target_table for s in suites],
+        }
+        
         tables_dict = {}
+        tables_for_profiling = []
         # To enable target and source from different database/schema
         if is_same_source:
             engine = create_engine(bds.to_database_url(), **bds.engine_args())
 
-            # TODO: change this line
-            self.bengine = engine
-            self.tengine = engine
+            self.bengine, self.tengine = engine, engine
 
-            base_table, target_table = self._get_table_list(rule)
+            for suite in suites:
+                base_table, target_table = self._get_table_list(suite)
+                tables_for_profiling.append(base_table)
+                tables_for_profiling.append(target_table)
 
             profiler = Profiler(
-                engine, RichProfilerEventHandler([base_table, target_table])
+                engine, RichProfilerEventHandler(tables_to_profile.get("base").extend(tables_to_profile.get("target")))
             )
             # try:
             schema = inspect(engine).default_schema_name
 
-            bprofile_result = profiler.profile(
-                [ProfileSubject(base_table, schema, base_table)]
-            )
+            base_tables = [ProfileSubject(t, schema, t) for t in tables_to_profile.get("base")]
+            target_tables = [ProfileSubject(t, schema, t) for t in tables_to_profile.get("target")]
+
+            bprofile_result = profiler.profile(base_tables)
             result["profiling"]["base"] = bprofile_result.get("tables")
 
-            tprofile_result = profiler.profile(
-                [ProfileSubject(target_table, schema, target_table)]
-            )
+            tprofile_result = profiler.profile(target_tables)
             result["profiling"]["target"] = tprofile_result.get("tables")
 
-            tables_dict["base_table"] = profiler._fetch_table_metadata(
-                ProfileSubject(base_table, schema, target_table), reflecting_cache={}
-            )
-            tables_dict["target_table"] = profiler._fetch_table_metadata(
-                ProfileSubject(target_table, schema, target_table), reflecting_cache={}
-            )
+            tables_dict["base"] = [profiler._fetch_table_metadata(ProfileSubject(t, schema, t), reflecting_cache={}) for t in tables_to_profile.get("base")]
+            tables_dict["target"] = [profiler._fetch_table_metadata(ProfileSubject(t, schema, t), reflecting_cache={}) for t in tables_to_profile.get("target")]
+
+            # tables_dict["target_table"] = profiler._fetch_table_metadata(
+            #     ProfileSubject(target_table, schema, target_table), reflecting_cache={}
+            # )
 
         else:
             bengine = create_engine(bds.to_database_url(), **bds.engine_args())
             tengine = create_engine(tds.to_database_url(), **tds.engine_args())
             self.bengine = bengine
             self.tengine = tengine
-
-            bprofilers = Profiler(bengine, RichProfilerEventHandler([rule.base_table]))
-            tprofilers = Profiler(
-                tengine, RichProfilerEventHandler([rule.target_table])
-            )
             bschema = inspect(bengine).default_schema_name
             tschema = inspect(tengine).default_schema_name
-            b_profiler_result = bprofilers.profile(
-                [ProfileSubject(rule.base_table, bschema, rule.base_table)]
-            )
-            t_profiler_result = tprofilers.profile(
-                [ProfileSubject(rule.target_table, tschema, rule.target_table)]
-            )
+            base_tables = [ProfileSubject(t, bschema, t) for t in tables_to_profile.get("base")]
+            target_tables = [ProfileSubject(t, tschema, t) for t in tables_to_profile.get("target")]
+            bprofilers = Profiler(bengine, RichProfilerEventHandler([t.table for t in base_tables]))
+            tprofilers = Profiler(tengine, RichProfilerEventHandler([t.table for t in target_tables]))
+
+            b_profiler_result = bprofilers.profile(base_tables)
+            t_profiler_result = tprofilers.profile(target_tables)
             result["profiling"]["base"] = b_profiler_result.get("tables")
             result["profiling"]["target"] = t_profiler_result.get("tables")
-            base_table, target_table = self._get_table_list(rule)
+            # base_table, target_table = self._get_table_list(r_project)
 
             # TODO: differentiat table name with schema/database
-            tables_dict["base_table"] = bprofilers._fetch_table_metadata(
-                ProfileSubject(base_table, bschema, base_table), reflecting_cache={}
-            )
-            tables_dict["target_table"] = tprofilers._fetch_table_metadata(
-                ProfileSubject(target_table, tschema, target_table), reflecting_cache={}
-            )
+            tables_dict["base"] = [bprofilers._fetch_table_metadata(t, reflecting_cache={}) for t in base_tables]
+            tables_dict["target"] = [tprofilers._fetch_table_metadata(t, reflecting_cache={}) for t in target_tables]
+
+            # tables_dict["target_table"] = tprofilers._fetch_table_metadata(
+            #     ProfileSubject(target_table, tschema, target_table), reflecting_cache={}
+            # )
 
         # Reconciling
         console.rule("Reconciling")
+        
 
-        # tables_dict = {}
-        # for table in tables:
-        #     tables_dict[table] = profiler._fetch_table_metadata(ProfileSubject(table, schema, table), reflecting_cache={})
+        for suite in suites:
+            base_table: Table = list(filter(lambda x: x.name == suite.base_table, tables_dict.get('base')))[0]
+            target_table: Table = list(filter(lambda x: x.name == suite.target_table, tables_dict.get('target')))[0]
+            base_col = base_table.columns[suite.base_join_key]  
+            target_col = target_table.columns[suite.target_join_key]
 
-        # Use sqlalchmey Table type generated by Profiles
-        base_table: Table = tables_dict["base_table"]
-        target_table: Table = tables_dict["target_table"]
-        base_col = base_table.columns[rule.base_join_key]
-        target_col = target_table.columns[rule.target_join_key]
-        rules = rule.column_reconcile_rules
+            suite_result = {
+                "name": suite.name,
+                "metadata": {
+                    "name": suite.name,
+                    "description": suite.description,
+                    "base_table": base_table.name,
+                    "target_table": target_table.name,
+                    "base_column": base_col.name,
+                    "target_column:": target_col.name,
+                },
+                "tables": {},
+                "columns": {},
+            }            
+                
+            # tables_dict = {}
+            # for table in tables:
+            #     tables_dict[table] = profiler._fetch_table_metadata(ProfileSubject(table, schema, table), reflecting_cache={})
 
-        # base_database = bds.database
-        # target_database = tds.database
-        # base_schema = bds.schema
-        # target_schema = tds.schema
+            # Use sqlalchmey Table type generated by Profiles
+            # base_table: Table = tables_dict["base_table"]
+            # target_table: Table = tables_dict["target_table"]
+            # base_col = base_table.columns[r_project.base_join_key]
+            # target_col = target_table.columns[r_project.target_join_key]
+            # rules = r_project.column_reconcile_rules
 
-        console.rule("Reconciling Tables Stats")
-        trecon = self._reconcile_table(
-            base_table,
-            target_table,
-            base_col,
-            target_col,
-        )
+            # base_database = bds.database
+            # target_database = tds.database
+            # base_schema = bds.schema
+            # target_schema = tds.schema
 
-        result["reconcile"]["tables"] = trecon
+            console.rule("Reconciling Tables Stats")
+            trecon = self._reconcile_table(
+                base_table,
+                target_table,
+                base_col,
+                target_col,
+            )
 
-        console.rule("Reconciling Columns Stats")
-        crecon = self._reconcile_column(
-            base_table, target_table, base_col, target_col, rules
-        )
+            # result["reconcile"]["tables"] = trecon
+            suite_result["tables"].update(trecon)
 
-        result["reconcile"]["columns"] = crecon
-        result["reconcile"]["metadata"] = {
-            "name": rule_name,
-            "description": rule_description,
-            "base_table": rule_base_table,
-            "base_column": rule_base_column,
-            "target_table": rule_target_table,
-            "target_column": rule_target_column,            
-            "base_source": base_source,
-            "target_source": target_source,
-            # "base_database": base_database,
-            # "target_database": target_database,
-            # "base_schema": base_schema,
-            # "target_schema": target_schema,
-        }
-        result["reconcile"]["name"] = rule_name
-        result["created_at"] = created_at.isoformat()
-        result["id"] = run_id
-        decorate_with_metadata(result["profiling"])
+            console.rule("Reconciling Columns")
+            # rules = suite.column_reconcile_rules
+            crecon = self._reconcile_column(
+                base_table, 
+                target_table, 
+                base_col, 
+                target_col, 
+                suite.column_reconcile_rules
+            )
 
-        console.rule("Summary")
-        # TODO: Implement summary presentation funciton
+            suite_result["columns"].update(crecon)
 
-        filesystem = FileSystem(report_dir=report_dir)
-        output_path = prepare_default_output_path(
-            filesystem, created_at, ds=ds, task="reconcile"
-        )
-        output_file = os.path.join(output_path, "reconcile.json")
+            result["reconcile"].append(suite_result)
+
+            # result["reconcile"]["columns"] = crecon
+            # result["reconcile"]["metadata"] = {
+            #     "name": project_name,
+            #     "description": project_description,
+            #     "base_table": rule_base_table,
+            #     "base_column": rule_base_column,
+            #     "target_table": rule_target_table,
+            #     "target_column": rule_target_column,            
+            #     "base_source": base_source,
+            #     "target_source": target_source,
+            #     # "base_database": base_database,
+            #     # "target_database": target_database,
+            #     # "base_schema": base_schema,
+            #     # "target_schema": target_schema,
+            # }
+            # result["reconcile"]["name"] = project_name
+            # result["created_at"] = created_at.isoformat()
+            # result["id"] = run_id
+            # decorate_with_metadata(result["profiling"])
+
+            console.rule("Summary")
+            # TODO: Implement summary presentation funciton
+
+            filesystem = FileSystem(report_dir=report_dir)
+            output_path = prepare_default_output_path(
+                filesystem, created_at, ds=ds, task="reconcile"
+            )
+            output_file = os.path.join(output_path, "reconcile.json")
 
         if output:
             clone_directory(output_path, output)
@@ -275,8 +313,15 @@ class Reconciler:
         base_database: str = None,
         target_database: str = None,
     ):
-        base_db = self.bengine.url.database.split("/")[0]
-        target_db = self.tengine.url.database.split("/")[0]
+        if self.bengine.url.database:
+            base_db = self.bengine.url.database.split("/")[0]
+        else:
+            base_db = ''
+
+        if self.tengine.url.database:
+            target_db = self.tengine.url.database.split("/")[0]
+        else:
+            target_db = ''
 
         result = reconcile_table_counts(
             self.bengine,
@@ -310,8 +355,8 @@ class Reconciler:
 
             # Loop through base and target column data type to dispath to specific column reconciler
 
-            base_compare_key: Column = base_table.columns[rule.base_compare_key]
-            target_compare_key: Column = target_table.columns[rule.target_compare_key]
+            base_compare_key: Column = base_table.columns[rule.base_compare_column]
+            target_compare_key: Column = target_table.columns[rule.target_compare_column]
             rule_name = rule.name
 
             if isinstance(base_compare_key.type, String) and isinstance(
@@ -418,7 +463,7 @@ class Reconciler:
             index += 1
         return result
 
-    def _get_table_list(self, rule: ReconcileRule):
+    def _get_table_list(self, rule: ReconcileSuite):
         base_table = rule.base_table
         target_table = rule.target_table
         return base_table, target_table
@@ -469,13 +514,13 @@ class ColumnReconciler(object):
                     select
                         {bkey} as bid,
                         {bcompkey} as bcid
-                    from {self.base_database}.{self.base_table.schema}.{self.base_table.name}
+                    from {self.base_database + '.' if self.base_database else ''}{self.base_table.schema + '.' if self.base_table.schema else ''}{self.base_table.name}
                 ),
                 t as (
                     select
                         {tkey} as tid,
                         {tcompkey} as tcid
-                    from {self.target_database}.{self.target_table.schema}.{self.target_table.name}
+                    from {self.target_database+'.' if self.target_database else ''}{self.target_table.schema+'.' if self.target_table.schema else ''}{self.target_table.name}
                 ),
                 fjoin as (
                     select
@@ -499,13 +544,13 @@ class ColumnReconciler(object):
                     select
                         {bkey} as bid,
                         {bcompkey} as bcid
-                    from {self.base_database}.{self.base_table.schema}.{self.base_table.name}
+                    from {self.base_database+'.' if self.base_database else ''}{self.base_table.schema+'.' if self.base_table.schema else ''}{self.base_table.name}
                 ),
                 t as (
                     select
                         {tkey} as tid,
                         {tcompkey} as tcid
-                    from {self.target_database}.{self.target_table.schema}.{self.target_table.name}
+                    from {self.target_database+'.' if self.target_database else ''}{self.target_table.schema+'.' if self.target_table.schema else ''}{self.target_table.name}
                 ),
                 fjoin as (
                     select bid, bcid, tid, tcid

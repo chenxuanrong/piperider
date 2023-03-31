@@ -1,16 +1,25 @@
 Reconciles:
-- name: reconcile 
-  base:
-    source: base_source 
-    table: base_table 
-    join_key: id
-  target:
-    source: target_source 
-    table: target_table
-    join_key: id
-  
-  rules:
-    - name: price 
-      description: Compare sale price across two versions
-      base_column: sale_price_display
-      target_column: sale_price_display
+- name: unittest 
+  description: test data
+  base_source: sqlite 
+  target_source: sqlite
+
+  suites:
+    - name: test1_test2
+      description: Compare table in test1 vs test2
+      base: 
+        table: test1 
+        join_key: user_id 
+      target:
+        table: test2
+        join_key: user_id
+      rules:
+        - name: user_name
+          base_column: user_name 
+          target_column: user_name
+        - name: age
+          base_column: age
+          target_column: age
+        - name: birthday
+          base_column: birthday
+          target_column: birthday
