@@ -84,6 +84,8 @@ export default function RRColumnDetailsPage({
   const description = currentReconcileEntry?.metadata.description;
   const baseTableName = currentReconcileEntry?.metadata.base_table || '';
   const targetTableName = currentReconcileEntry?.metadata.target_table || '';
+  const baseSource = currentReconcileEntry?.metadata.base_source || '';
+  const targetSource = currentReconcileEntry?.metadata.target_source || '';
   const baseDataTable = baseTables[baseTableName];
   const targetDataTable = baseTables[targetTableName];
   const baseDataColumns = baseDataTable?.columns || {};
@@ -279,7 +281,7 @@ export default function RRColumnDetailsPage({
                         Table
                       </Text>
                       <Text textAlign={'right'} fontSize={'sm'} width={'100%'}>
-                        {baseTableName}
+                        {baseSource}.{baseTableName}
                       </Text>
                     </Flex>
                     <Divider orientation="vertical" />
@@ -293,7 +295,7 @@ export default function RRColumnDetailsPage({
                         Table
                       </Text>
                       <Text textAlign={'right'} fontSize={'sm'} width={'100%'}>
-                        {baseTableName}
+                        {targetSource}.{baseTableName}
                       </Text>
                     </Flex>
                   </Grid>

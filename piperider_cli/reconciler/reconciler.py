@@ -207,6 +207,11 @@ class Reconciler:
         target_col = target_table.columns[rule.target_join_key]
         rules = rule.column_reconcile_rules
 
+        # base_database = bds.database
+        # target_database = tds.database
+        # base_schema = bds.schema
+        # target_schema = tds.schema
+
         console.rule("Reconciling Tables Stats")
         trecon = self._reconcile_table(
             base_table,
@@ -229,7 +234,13 @@ class Reconciler:
             "base_table": rule_base_table,
             "base_column": rule_base_column,
             "target_table": rule_target_table,
-            "target_column": rule_target_column,
+            "target_column": rule_target_column,            
+            "base_source": base_source,
+            "target_source": target_source,
+            # "base_database": base_database,
+            # "target_database": target_database,
+            # "base_schema": base_schema,
+            # "target_schema": target_schema,
         }
         result["reconcile"]["name"] = rule_name
         result["created_at"] = created_at.isoformat()
