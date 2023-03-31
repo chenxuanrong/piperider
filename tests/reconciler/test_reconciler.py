@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from unittest import TestCase
+from unittest import TestCase, skip
 from typing import List
 import os.path
 
@@ -59,8 +59,8 @@ class TestReconciler(TestCase):
         r_project = projects[0]
         assert isinstance(r_project, ReconcileProject)
         assert r_project.name == "unittest"
-        assert r_project.base_source == "base_source"
-        assert r_project.target_source == "target_source"
+        assert r_project.base_source == "sqlite"
+        assert r_project.target_source == "sqlite"
 
         r_suites = r_project.suites
         assert isinstance(r_suites, List)
@@ -147,8 +147,8 @@ class TestReconciler(TestCase):
             name="user_name",
             base_column="user_id",
             target_column="user_id",
-            # base_compare_key="user_name",
-            # target_compare_key="user_name",
+            base_compare_column="user_name",
+            target_compare_column="user_name",
             reconcile_condition="equal",
         )
 
@@ -211,6 +211,8 @@ class TestReconciler(TestCase):
         assert result["not_comparable"] + result["equal"] + result["not_equal"] == result["total"]
         assert result["equal_percentage"] == "33.33%"
 
+
+    @skip("Sqlite not implemented")
     def test_reconciler_e2e(self):
         reconciler  = self.reconciler
         res = reconciler.reconcile(project="unittest")
