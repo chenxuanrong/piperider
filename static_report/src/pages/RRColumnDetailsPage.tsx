@@ -108,7 +108,7 @@ export default function RRColumnDetailsPage({
   const tableMetrics = currentReconcileEntry?.tables;
   const columnMetrics = currentReconcileEntry.columns[ruleName];
   const transformColumnMetrics = (data: ReconcileColumnMetrics) => {
-    if (data.generic_type == 'string') {
+    if (data.generic_type === 'string') {
       let result;
       result = [
         {
@@ -118,10 +118,10 @@ export default function RRColumnDetailsPage({
           metaKey: 'total',
         },
         {
-          name: 'equal_raw',
-          firstSlot: data.equal_raw,
-          secondSlot: data.equal_raw_percentage,
-          metaKey: 'equal_raw',
+          name: 'equal',
+          firstSlot: data.equal,
+          secondSlot: data.equal_percentage,
+          metaKey: 'equal',
         },
         {
           name: 'equal_case_insensitive',
@@ -147,22 +147,22 @@ export default function RRColumnDetailsPage({
           metaKey: 'total',
         },
         {
-          name: 'equal_raw',
-          firstSlot: data.equal_raw,
-          secondSlot: data.equal_raw_percentage,
-          metaKey: 'equal_raw',
+          name: 'equal',
+          firstSlot: data.equal,
+          secondSlot: data.equal_percentage,
+          metaKey: 'equal',
         },
         {
-          name: 'equal_withiin_5_difference',
+          name: 'equal_within_5_difference',
           firstSlot: data.equal_within_5_difference,
-          secondSlot: data.equal_within_5_difference ?? 0 / (data.total ?? 1),
+          secondSlot: data.equal_within_5_difference_percentage,
           metaKey: 'equal_within_5_difference',
         },
         {
-          name: 'equal_withiin_5_difference',
+          name: 'equal_within_10_difference',
           firstSlot: data.equal_within_10_difference,
-          secondSlot: data.equal_within_10_difference ?? 0 / (data.total ?? 1),
-          metaKey: 'equal_within_5_difference',
+          secondSlot: data.equal_within_10_difference_percentage,
+          metaKey: 'equal_within_10_difference',
         },
       ];
       return result;
@@ -176,31 +176,45 @@ export default function RRColumnDetailsPage({
           metaKey: 'total',
         },
         {
-          name: 'equal_raw',
-          firstSlot: data.equal_raw,
-          secondSlot: data.equal_raw_percentage,
-          metaKey: 'equal_raw',
+          name: 'equal',
+          firstSlot: data.equal,
+          secondSlot: data.equal_percentage,
+          metaKey: 'equal',
         },
         {
           name: 'equal_within_1_day_difference',
           firstSlot: data.equal_within_1_day_difference,
-          secondSlot:
-            data.equal_within_1_day_difference ?? 0 / (data.total ?? 1),
+          secondSlot: data.equal_within_1_day_difference_percentage,
           metaKey: 'equal_within_1_day_difference',
         },
         {
           name: 'equal_within_1_week_difference',
           firstSlot: data.equal_within_1_week_difference,
-          secondSlot:
-            data.equal_within_1_week_difference ?? 0 / (data.total ?? 1),
+          secondSlot: data.equal_within_1_week_difference_percentage,
           metaKey: 'equal_within_1_week_difference',
         },
         {
           name: 'equal_within_1_month_difference',
           firstSlot: data.equal_within_1_month_difference,
-          secondSlot:
-            data.equal_within_1_month_difference ?? 0 / (data.total ?? 1),
+          secondSlot: data.equal_within_1_month_difference_percentage,
           metaKey: 'equal_within_1_month_difference',
+        },
+      ];
+      return result;
+    }
+    if (data.generic_type === 'boolean') {
+      let result = [
+        {
+          name: 'total',
+          firstSlot: data.total,
+          secondSlot: '100%',
+          metaKey: 'total',
+        },
+        {
+          name: 'equal',
+          firstSlot: data.equal,
+          secondSlot: data.equal_percentage,
+          metaKey: 'equal',
         },
       ];
       return result;

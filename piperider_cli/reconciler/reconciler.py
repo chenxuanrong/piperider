@@ -19,6 +19,13 @@ from piperider_cli.runner import (
 )
 from piperider_cli.filesystem import FileSystem
 
+def dtostr(number: Union[int, float, decimal.Decimal]) -> str:
+    """
+    Format decimal/float to percentage string
+    :para number
+    """
+    return f"{(number):.2%}"
+
 
 class Reconciler:
     """
@@ -554,9 +561,7 @@ class StringColumnReconciler(ColumnReconciler):
                         sum(case when lower(bcid) = lower(tcid) then 1 else 0 end) as equal_case_insensitive,
                         sum(case when trim(lower(bcid)) = trim(lower(tcid)) then 1 else 0 end) as equal_trim_whitespace,
                         sum(case when bcid != tcid then 1 else 0 end) as not_equal,
-                        sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable,
-                        round(sum(case when bcid = tcid then 1 else 0 end) * 1.0 / count(*), 2) as equal_perc,
-                        round(sum(case when bcid != tcid then 1 else 0 end) * 1.0 / count(*), 2) as not_equal_perc
+                        sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable
                     from fjoin
                 )
                 select * from stats
@@ -570,12 +575,7 @@ class StringColumnReconciler(ColumnReconciler):
                 _equal_trim_whitespace,
                 _not_equal,
                 _not_comparable,
-                _equal_perc,
-                _not_equal_perc,
             ) = result
-
-            _equal_perc = dtof(_equal_perc)
-            _not_equal_perc = dtof(_not_equal_perc)
 
             result = {
                 "name": self.name,
@@ -586,19 +586,15 @@ class StringColumnReconciler(ColumnReconciler):
                 "base_compare_key": self.base_compare_col.name,
                 "target_compare_key": self.target_compare_col.name,
                 "total": _total,
-                "equal_raw": _equal,
-                "equal_case_insensitive": _equal_case_insensitive,
-                "equal_trim_whitespace": _equal_trim_whitespace,
+                "equal": _equal,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
-                "equal_raw_percentage": _equal_perc,
-                "equal_case_insensitive_percentage": round(
-                    _equal_case_insensitive / _total, 2
-                ),
-                "equal_trim_whitespace_percentage": round(
-                    _equal_trim_whitespace / _total, 2
-                ),
-                "not_equal_percentage": _not_equal_perc,
+                "equal_case_insensitive": _equal_case_insensitive,
+                "equal_trim_whitespace": _equal_trim_whitespace,
+                "equal_percentage": dtostr(round(_equal / _total, 4)),
+                "not_equal_percentage": dtostr(round(_not_equal / _total, 4)),
+                "equal_case_insensitive_percentage": dtostr(round(_equal_case_insensitive / _total, 4)),
+                "equal_trim_whitespace_percentage": dtostr(round(_equal_trim_whitespace / _total, 4))
             }
 
             return result
@@ -645,11 +641,12 @@ class NumericColumnReconciler(ColumnReconciler):
                     select
                         count(*) as total,
                         sum(case when bcid - tcid = 0 then 1 else 0 end) as equal,
-                        sum(case when (abs(bcid - tcid)+0.1 * 1.0 / (bcid + 0.1)) <= 0.05 then 1 else 0 end) as equal_less_5_perc,
+                        sum(case when (abs(bcid - tcid)+0.1 * 1.0 / (bcid + 0.1)) <= 0.05 then 1 else 0 end) as equal_within_5_difference,
+                        sum(case when (abs(bcid - tcid)+0.1 * 1.0 / (bcid + 0.1)) <= 0.1 then 1 else 0 end) as equal_within_10_difference,
                         sum(case when bcid - tcid != 0 then 1 else 0 end) as not_equal,
                         sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable,
-                        round(sum(case when bcid - tcid = 0 then 1 else 0 end) * 1.0 / count(*), 2) as equal_perc,
-                        round(sum(case when bcid != tcid then 1 else 0 end) * 1.0 / count(*), 2) as not_equal_perc
+                        round(sum(case when bcid - tcid = 0 then 1 else 0 end) * 1.0 / count(*), 4) as equal_perc,
+                        round(sum(case when bcid != tcid then 1 else 0 end) * 1.0 / count(*), 4) as not_equal_perc
                     from fjoin
                 )
                 select * from stats
@@ -659,7 +656,8 @@ class NumericColumnReconciler(ColumnReconciler):
             (
                 _total,
                 _equal,
-                _equal_less_5_perc,
+                _equal_within_5_difference,
+                _equal_within_10_difference,
                 _not_equal,
                 _not_comparable,
                 _equal_perc,
@@ -668,7 +666,6 @@ class NumericColumnReconciler(ColumnReconciler):
 
             _equal_perc = dtof(_equal_perc)
             _not_equal_perc = dtof(_not_equal_perc)
-            _equal_less_5_perc = dtof(_equal_less_5_perc)
 
             result = {
                 "name": self.name,
@@ -680,12 +677,14 @@ class NumericColumnReconciler(ColumnReconciler):
                 "target_compare_key": self.target_compare_col.name,
                 "total": _total,
                 "equal": _equal,
-                "equal_less_5_perc": _equal_less_5_perc,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
-                "equal_percentage": _equal_perc,
-                "equal_less_5_percentage": round(_equal_less_5_perc / _total, 2),
-                "not_equal_percentage": _not_equal_perc,
+                "equal_within_5_difference": _equal_within_5_difference,
+                "equal_within_10_difference": _equal_within_10_difference,
+                "equal_percentage": dtostr(_equal_perc),
+                "not_equal_percentage": dtostr(_not_equal_perc),
+                "equal_within_5_difference_percentage": dtostr(round(_equal_within_5_difference / _total, 4)),
+                "equal_within_10_difference_percentage": dtostr(round(_equal_within_10_difference / _total, 4)),
             }
 
             return result
@@ -735,6 +734,9 @@ class DatetimeColumnReconciler(ColumnReconciler):
                         count(*) as total,
                         sum(case when julianday(bcid) - julianday(tcid) = 0 then 1 else 0 end) as equal,
                         sum(case when julianday(bcid) - julianday(tcid) != 0 then 1 else 0 end) as not_equal,
+                        sum(case when abs(julianday(bcid) - julianday(tcid)) < 1 then 1 else 0 end) as equal_within_1_day_difference,
+                        sum(case when abs(julianday(bcid) - julianday(tcid)) < 7 then 1 else 0 end) as equal_within_1_week_difference,
+                        sum(case when abs(julianday(bcid) - julianday(tcid)) < 30 then 1 else 0 end) as equal_within_1_month_difference,
                         sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable
                     from fjoin
                 )
@@ -748,13 +750,16 @@ class DatetimeColumnReconciler(ColumnReconciler):
                         count(*) as total,
                         sum(case when abs(bcid::date - tcid::date) = 0 then 1 else 0 end) as equal,
                         sum(case when abs(bcid::date - tcid::date) != 0 then 1 else 0 end) as not_equal,
+                        sum(case when abs(bcid::date - tcid::date) < 1 then 1 else 0 end) as equal_within_1_day_difference,
+                        sum(case when abs(bcid::date - tcid::date) < 7 then 1 else 0 end) as equal_within_1_week_difference,
+                        sum(case when abs(bcid::date - tcid::date) < 30 then 1 else 0 end) as equal_within_1_month_difference,
                         sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable
                     from fjoin
                 )
                 select * from stats
                 """
             result = conn.execute(text(query)).fetchone()
-            _total, _equal, _not_equal, _not_comparable = result
+            _total, _equal, _not_equal, equal_withitn_1_day_difference, equal_within_1_week_difference, equal_within_1_month_difference, _not_comparable = result
 
             result = {
                 "name": self.name,
@@ -768,8 +773,14 @@ class DatetimeColumnReconciler(ColumnReconciler):
                 "equal": _equal,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
-                "equal_percentage": round(_equal / _total, 2),
-                "not_equal_percentage": round(1 - _equal / _total, 2),
+                "equal_percentage": dtostr(round(_equal / _total, 4)),
+                "not_equal_percentage": dtostr(round(1 - _equal / _total, 4)),
+                "equal_within_1_day_difference": equal_withitn_1_day_difference,
+                "equal_within_1_week_difference": equal_within_1_week_difference,
+                "equal_within_1_month_difference": equal_within_1_month_difference,
+                "equal_within_1_day_difference_percentage": dtostr(round(equal_withitn_1_day_difference / _total, 4)),
+                "equal_within_1_week_difference_percentage": dtostr(round(equal_within_1_week_difference / _total, 4)),
+                "equal_within_1_month_difference_percentage": dtostr(round(equal_within_1_month_difference / _total, 4)),
             }
             return result
 
@@ -836,8 +847,8 @@ class BooleanColumnReconciler(ColumnReconciler):
                 "equal": _equal,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
-                "equal_percentage": round(_equal / _total, 2),
-                "not_equal_percentage": round(1 - _equal / _total, 2),
+                "equal_percentage": dtostr(round(_equal / _total, 4)),
+                "not_equal_percentage": dtostr(round(1 - _equal / _total, 4)),
             }
             return result
 

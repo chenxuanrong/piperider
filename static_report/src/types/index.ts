@@ -30,6 +30,9 @@ export interface ReconcileColumnMetrics {
     | 'boolean'
     | 'other'
     | 'date';
+  /**
+   * Metadata
+   */
   description?: string;
   base_table: string;
   base_column: string;
@@ -37,9 +40,12 @@ export interface ReconcileColumnMetrics {
   target_column: string;
   base_compare_key: string;
   target_compare_key: string;
+  /**
+   * Common statistics
+   */
   total?: number;
-  equal_raw?: number;
-  equal_raw_percentage?: number;
+  equal?: number;
+  equal_percentage?: number;
   not_equal?: number;
   not_equal_percentage?: number;
   not_comparable?: number;
@@ -47,13 +53,15 @@ export interface ReconcileColumnMetrics {
    * String type reconciliation statistics
    */
   equal_case_insensitive?: number;
-  equal_case_insensitive_percentage?: number;
+  equal_case_insensitive_percentage?: string;
   equal_trim_whitespace?: number;
-  equal_trim_whitespace_percentage?: number;
+  equal_trim_whitespace_percentage?: string;
   /**
    * Number type reconciliation statistics
    */
   equal_within_5_difference?: number;
+  equal_within_5_difference_percentage?: string;
+  equal_within_10_difference_percentage?: string;
   equal_within_10_difference?: number;
   /**
    * Datetime type reconciliation statistics
@@ -61,6 +69,9 @@ export interface ReconcileColumnMetrics {
   equal_within_1_day_difference?: number;
   equal_within_1_week_difference?: number;
   equal_within_1_month_difference?: number;
+  equal_within_1_day_difference_percentage?: string;
+  equal_within_1_week_difference_percentage?: string;
+  equal_within_1_month_difference_percentage?: string;
 }
 
 export interface ReconcileTableMetrics {

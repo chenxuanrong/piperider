@@ -7,7 +7,7 @@ export interface ColumnComparisonStatsSchema {
   /**
    *  The total count of base value is equal to target value
    */
-  exactly_equal?: number;
+  equal?: number;
   case_insensitive_equal?: number;
   trim_white_space_equal?: number;
   not_comparable?: number;
@@ -22,21 +22,37 @@ export interface ColumnComparisonStatsSchema {
 }
 
 const reconcileMetricsDescrption = {
-  exactly_equal: 'Count of base value exactly equal to target value',
-  case_insensitive_equal:
-    'Comparison of string comparison in case insensitive mode',
-  trim_white_space_equal: 'Equal when white space is trimmed',
+  equal: 'Base value equal to target value eaxctly',
+  // case_insensitive_equal:
+  //   'Comparison of string comparison in case insensitive mode',
+  // trim_white_space_equal: 'Equal when white space is trimmed',
   not_comparable: 'Not comparable case e.g. null vesus value',
   total: 'Total records',
-  with_5_perc_differnce:
+  equal_within_5_difference:
     'Numeric value comparison when absolute difference is within 5 perc of base value',
-  with_10_perc_differnce:
+  equal_with_10_difference:
     'Numeric value comparison when absolute difference is within 10 perc of base value',
-  within_1_day_difference: 'Date or datetime data when equal within 1 day',
-  within_1_week_difference: 'Date or datetime data when equal within 1 week',
-  within_1_month_difference: 'Date or datetime data when equal within 1 month',
+  equal_within_1_day_difference:
+    'Date or datetime data when equal within 1 day',
+  equal_within_1_week_difference:
+    'Date or datetime data when equal within 1 week',
+  equal_within_1_month_difference:
+    'Date or datetime data when equal within 1 month',
   equal_case_insensitive: 'Equal when case insensitive',
   equal_trim_whitespace: 'Equal when white space is trimmed',
+};
+
+const reconcileMetricsSlug = {
+  equal: 'Exactly Equal',
+  not_comparable: 'Not Comparable',
+  total: 'Total',
+  equal_within_5_difference: 'Within 5% Difference',
+  equal_within_10_difference: 'Within 10% Difference',
+  equal_within_1_day_difference: 'Within 1 Day Difference',
+  equal_within_1_week_difference: 'Within 1 Week Difference',
+  equal_within_1_month_difference: 'Within 1 Month Difference',
+  equal_case_insensitive: 'Equal Case Insensitive',
+  equal_trim_whitespace: 'Equal Trim Whitespace',
 };
 
 export interface MetricEntry {
@@ -74,6 +90,7 @@ export function ReconcileMetricsInfo({
   const metaDescription = reconcileMetricsDescrption[metaKey || ''];
   const { width, ...restProps } = props;
   const isTargetNull = secondSlot === null;
+  const slug = reconcileMetricsSlug[metaKey || ''];
   return (
     <Flex {...restProps} alignItems={'center'}>
       <Tooltip
@@ -81,8 +98,8 @@ export function ReconcileMetricsInfo({
         isDisabled={!Boolean(metaDescription)}
         placement={'top'}
       >
-        <Text width={width || '8em'} fontWeight={700} fontSize={'sm'}>
-          {name}
+        <Text width={width || '12em'} fontWeight={700} fontSize={'sm'}>
+          {slug}
         </Text>
       </Tooltip>
       <Flex gap={{ lg: 5, md: 1 }} flexDirection={'row'}></Flex>

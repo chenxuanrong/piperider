@@ -13,6 +13,7 @@ from piperider_cli.reconciler.reconciler import (
     StringColumnReconciler,
     NumericColumnReconciler,
     DatetimeColumnReconciler,
+    dtostr,
 )
 from piperider_cli.reconciler.reconcile_rule import (
     ReconcileRule,
@@ -183,3 +184,6 @@ class TestReconciler(TestCase):
         assert result["not_comparable"] + result["equal"] + result["not_equal"] == result["total"]
         assert result["equal_percentage"] == 0.33
 
+def test_dtostr():
+    number = 0.1234
+    assert dtostr(number) == "12.34%"
