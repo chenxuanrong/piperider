@@ -697,8 +697,18 @@ class NumericColumnReconciler(ColumnReconciler):
                     select
                         count(*) as total,
                         sum(case when bcid - tcid = 0 then 1 else 0 end) as equal,
-                        sum(case when (abs(bcid - tcid)+0.1 * 1.0 / (bcid + 0.1)) <= 0.05 then 1 else 0 end) as equal_within_5_difference,
-                        sum(case when (abs(bcid - tcid)+0.1 * 1.0 / (bcid + 0.1)) <= 0.1 then 1 else 0 end) as equal_within_10_difference,
+                        sum(case 
+                                when bcid = tcid then 1
+                                when tcid = 0 and abs(bcid) <= 0.05 then 1
+                                when abs((bcid - tcid) * 1.0 / ((bcid + tcid) / 2) ) <= 0.05 then 1 
+                            else 0 
+                            end) as equal_within_5_difference,
+                        sum(case 
+                                when bcid = tcid then 1
+                                when tcid = 0 and abs(bcid) <= 0.1 then 1
+                                when abs((bcid - tcid) * 1.0 / ((bcid + tcid) / 2) ) <= 0.1 then 1 
+                            else 0 
+                            end) as equal_within_10_difference,                            
                         sum(case when bcid - tcid != 0 then 1 else 0 end) as not_equal,
                         sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable,
                         round(sum(case when bcid - tcid = 0 then 1 else 0 end) * 1.0 / count(*), 4) as equal_perc,
