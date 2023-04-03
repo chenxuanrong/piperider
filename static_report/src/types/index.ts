@@ -101,19 +101,17 @@ export interface ReconcileResults {
 }
 
 export interface ReconcileProfilingSchema {
-  base: TableSchema;
-  target: TableSchema;
-  version: string;
-  project_id: string;
-  user_id: string;
-  metadata_version: string;
+  base: { [key: string]: TableSchema };
+  target: { [key: string]: TableSchema };
 }
 export interface ReconcileReportSchema {
   // maps to reconcile.json structure
   id: string;
+  project: string;
   created_at: string;
+  description: string;
   profiling: ReconcileProfilingSchema; // table profiling result, same in run
-  reconcile: ReconcileResults; // reconciliation result
+  reconcile: ReconcileResults[]; // reconciliation result
 }
 
 export interface ComparisonReportSchema {

@@ -97,20 +97,23 @@ const getReportTitle = (rawData: ComparableReport) => {
 };
 
 const getReconcile = (rawData: ComparableReport) => {
-  const reconcile = rawData.reconcile;
   // get profiling results, seems different to base/input, need to figure out
   // a way to fit into existed code
+  const project = rawData.project;
   const profiling = rawData.profiling;
+  const reconcile = rawData.reconcile;
+  const description = rawData.description;
 
-  const title = reconcile?.metadata?.name ?? '';
-  const metadata = reconcile?.metadata;
-  const tables = reconcile?.tables;
-  const columns = reconcile?.columns;
+  // const title = reconcile?.metadata?.name ?? '';
+  // const metadata = reconcile?.metadata;
+  // const tables = reconcile?.tables;
+  // const columns = reconcile?.columns;
   const resultObj = {
-    title: title,
-    metadata: metadata,
-    tables: tables,
-    columns: columns,
+    title: project,
+    reconcile: reconcile,
+    // metadata: metadata,
+    // tables: tables,
+    // columns: columns,
   };
   return resultObj;
 };

@@ -13,7 +13,7 @@ interface Props extends Selectable, Comparable {
   currentReconcile: string;
   currentRule: string;
   reconcileEntry: ReconcileResults;
-  reconcileEntryList: ReconcileResults;
+  reconcileEntryList: ReconcileResults[];
   onNavBack?: () => void;
   onNavToTableDetail?: (reconcileName: string) => void;
   onToggleShowExtra?: () => void;
@@ -58,14 +58,19 @@ export function ReconcileDetailMasterList({
           }}
         >
           <option value={'table-list'}>← Show All Reconcile Reports</option>
-          <option value={reconcileEntryList.name} key={reconcileEntryList.name}>
+          {/* <option value={reconcileEntryList.name} key={reconcileEntryList.name}>
             {reconcileEntryList.name}
-          </option>
+          </option> */}
           {/* {Object.keys(reconcileEntryList).map((entry, index) => (
             <option value={entry} key={index}>
               {entry}
             </option>
           ))} */}
+          {reconcileEntryList.map((entry, index) => (
+            <option value={entry.name} key={index}>
+              {entry.name}
+            </option>
+          ))}
         </Select>
 
         {/* Header */}

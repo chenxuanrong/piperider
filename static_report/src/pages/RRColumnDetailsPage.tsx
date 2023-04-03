@@ -67,25 +67,28 @@ export default function RRColumnDetailsPage({
   const setReportData = useReportStore((s) => s.setReportRawData);
   const [showExtra] = useLocalStorage(MASTER_LIST_SHOW_EXTRA, '');
   const [extraSpace, setExtraSpace] = useState<boolean>(Boolean(showExtra));
-  console.log(isTableDetailsView);
 
   setReportData({
     // base: baseTables,
     // target: targetTables,
     profiling: data.profiling,
     reconcile: data.reconcile,
+    project: data.project,
+    created_at: data.created_at,
+    description: data.description,
   });
   const { reconcileResults } = useReportStore.getState();
-  // const currentReconcileEntry = reconcileResults?.find(
-  //   (entry) => entry.metadata.name === reconcileName,
-  // );
-  const currentReconcileEntry = reconcileResults;
+  const reconcileEntries = reconcileResults.reconcile;
+  const currentReconcileEntry = reconcileEntries?.find(
+    (entry) => entry.metadata.name === reconcileName,
+  );
+  // const currentReconcileEntry = reconcileResults;
 
   const description = currentReconcileEntry?.metadata.description;
   const baseTableName = currentReconcileEntry?.metadata.base_table || '';
   const targetTableName = currentReconcileEntry?.metadata.target_table || '';
-  const baseSource = currentReconcileEntry?.metadata.base_source || '';
-  const targetSource = currentReconcileEntry?.metadata.target_source || '';
+  // const baseSource = currentReconcileEntry?.metadata.base_source || '';
+  // const targetSource = currentReconcileEntry?.metadata.target_source || '';
   const baseDataTable = baseTables[baseTableName];
   const targetDataTable = baseTables[targetTableName];
   const baseDataColumns = baseDataTable?.columns || {};
@@ -246,8 +249,8 @@ export default function RRColumnDetailsPage({
             onNavBack={() => {
               setLocation('/');
             }}
-            onNavToTableDetail={(ruleName) => {
-              setLocation(`/reconciles/${reconcileName}/rules/`);
+            onNavToTableDetail={(entry) => {
+              setLocation(`/reconciles/${entry}/rules/`);
             }}
             onToggleShowExtra={() => setExtraSpace((v) => !v)}
           />
@@ -281,7 +284,7 @@ export default function RRColumnDetailsPage({
                         Table
                       </Text>
                       <Text textAlign={'right'} fontSize={'sm'} width={'100%'}>
-                        {baseSource}.{baseTableName}
+                        base_source.{baseTableName}
                       </Text>
                     </Flex>
                     <Divider orientation="vertical" />
@@ -295,7 +298,7 @@ export default function RRColumnDetailsPage({
                         Table
                       </Text>
                       <Text textAlign={'right'} fontSize={'sm'} width={'100%'}>
-                        {targetSource}.{baseTableName}
+                        target_source.{baseTableName}
                       </Text>
                     </Flex>
                   </Grid>

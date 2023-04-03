@@ -35,6 +35,7 @@ export function RRTablesListPage({ data }: Props) {
     created_at: data.created_at,
   });
   const { reconcileResults, assertionsOnly } = useReportStore.getState();
+  const { title, reconcile } = reconcileResults;
 
   return (
     <Main isSingleReport={false}>
@@ -45,7 +46,7 @@ export function RRTablesListPage({ data }: Props) {
           <Text>Summary</Text>
         </Grid>
 
-        <Flex key={reconcileResults.title}>
+        {/* <Flex key={reconcileResults.title}>
           <TableListItem
             combinedAssertions={assertionsOnly}
             reconcileListEntry={reconcileResults}
@@ -57,9 +58,10 @@ export function RRTablesListPage({ data }: Props) {
               modal.onOpen();
             }}
           />
-        </Flex>
+        </Flex> */}
 
-        {/* {reconcileResults.map((reconcileEntry, i) => {
+        {reconcile.map((reconcileEntry, i) => {
+          console.log(reconcileEntry);
           return (
             <Flex key={i}>
               <TableListItem
@@ -69,13 +71,13 @@ export function RRTablesListPage({ data }: Props) {
                   setLocation(`/reconciles/${reconcileEntry.name}/rules/`)
                 }
                 onInfoClick={() => {
-                  setTableColsEntryId(i);
+                  setTableColsEntryId(reconcileEntry.name);
                   modal.onOpen();
                 }}
               />
             </Flex>
           );
-        })} */}
+        })}
       </Flex>
 
       <CommonModal
