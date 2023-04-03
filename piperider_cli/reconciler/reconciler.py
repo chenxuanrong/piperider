@@ -7,6 +7,7 @@ from rich.console import Console, escape
 from sqlalchemy.engine import Connection, Engine, create_engine
 from sqlalchemy import Table, Column, text
 
+from piperider_cli import datetime_to_str
 from piperider_cli.profiler.profiler import *
 from piperider_cli.reconciler.reconcile_rule import ColumnReconcileRule, ReconcileSuite, ReconcileProject
 from piperider_cli.configuration import Configuration
@@ -47,8 +48,12 @@ class Reconciler:
         console = Console()
         raise_exception_when_directory_not_writable(output)
 
+        run_id = uuid.uuid4().hex
+        created_at = datetime.utcnow()
+
         result = {
-            "id": "",
+            "id": run_id,
+            "created_at": datetime_to_str(created_at),
             "project": "",
             "description": "",
             "profiling": {
@@ -87,6 +92,8 @@ class Reconciler:
         # rule_base_column = r_project.base_join_key
         # rule_target_table = r_project.target_table
         # rule_target_column = r_project.target_join_key
+        result["project"] = project_name
+        result["description"] = project_description
 
         base_source = r_project.base_source
         target_source = (
@@ -128,9 +135,6 @@ class Reconciler:
 
         # Profile
         console.rule("Profiling")
-        run_id = uuid.uuid4().hex
-        created_at = datetime.utcnow()
-
         bds = datasources[base_source]
         tds = datasources[target_source]
 

@@ -111,7 +111,7 @@ const getReconcile = (rawData: ComparableReport) => {
   const resultObj = {
     title: project,
     reconcile: reconcile,
-    // metadata: metadata,
+    description: description,
     // tables: tables,
     // columns: columns,
   };

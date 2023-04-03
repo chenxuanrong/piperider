@@ -35,7 +35,7 @@ export function TableItemName({
   return (
     <Flex alignItems="center">
       <Icon as={FiGrid} color="piperider.500" />
-      <Tooltip label={name} placement={'top'}>
+      <Tooltip label={description} placement={'top'}>
         <Text
           maxW={tableListWidth / 2.75}
           textOverflow={'ellipsis'}
@@ -50,14 +50,14 @@ export function TableItemName({
         </Text>
       </Tooltip>
 
-      <Flex alignItems={'center'}>
+      {/* <Flex alignItems={'center'}>
         <Icon
           cursor="pointer"
           as={FiAlertCircle}
           ml={1}
           onClick={() => props.onInfoClick()}
         />
-      </Flex>
+      </Flex> */}
     </Flex>
   );
 }

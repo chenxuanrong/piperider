@@ -33,6 +33,8 @@ export function RRTablesListPage({ data }: Props) {
     profiling: data.profiling,
     reconcile: data.reconcile,
     created_at: data.created_at,
+    project: data.project,
+    description: data.description,
   });
   const { reconcileResults, assertionsOnly } = useReportStore.getState();
   const { title, reconcile } = reconcileResults;
