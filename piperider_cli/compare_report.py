@@ -555,7 +555,7 @@ class CompareReport(object):
             clone_directory(report_template_dir, directory)
             filename = os.path.join(directory, 'index.html')
             with open(filename, 'w') as f:
-                html = setup_report_variables(report_template_html, False, comparison_data.to_json())
+                html = setup_report_variables(report_template_html, False, comparison_data.to_json(), mode='comparison')
                 f.write(html)
 
         def output_summary(directory):

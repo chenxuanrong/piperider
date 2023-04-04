@@ -55,6 +55,13 @@ class PipeRiderNoProfilingResultError(PipeRiderError):
     hint = "Please execute command 'piperider run' to move forward."
 
 
+class PipeRiderNoReconcileResultError(PipeRiderError):
+    def __init__(self, result_file):
+        self.result = result_file
+        pass
+    message = "No reconcile result is found."
+    hint = "Please execute command 'piperider reconcile' to generate report."
+
 class PipeRiderInvalidDataSourceError(PipeRiderError):
     def __init__(self, name, config_file):
         self.name = name

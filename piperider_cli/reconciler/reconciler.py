@@ -306,7 +306,7 @@ class Reconciler:
         with open(output_file, "w") as f:
             f.write(json.dumps(result, indent=2))
 
-        return result
+        return 0 
 
     def _reconcile_table(
         self,

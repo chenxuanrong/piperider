@@ -24,7 +24,7 @@ from piperider_cli.error import \
     DbtProfileBigQueryAuthWithTokenUnsupportedError, \
     ReconcileRuleAssertionError
 
-from piperider_cli.logger import get_logger
+# from piperider_cli.logger import get_logger
 
 PIPERIDER_WORKSPACE_NAME = '.piperider'
 PIPERIDER_CONFIG_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'config.yml')
@@ -35,7 +35,7 @@ PIPERIDER_RECONCILE_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, '
 DBT_PROFILES_DIR_DEFAULT = '~/.dbt/'
 DBT_PROFILE_FILE = 'profiles.yml'
 
-logger = get_logger(__name__)
+# logger = get_logger(__name__)
 
 class Configuration(object):
     """
@@ -218,7 +218,7 @@ class Configuration(object):
         reconcile_rules: List[ReconcileProject] = []
 
         if os.path.exists(piperider_reconcile_path):
-            logger.info(f'Loading reconcile rules from {piperider_reconcile_path}')
+            # logger.info(f'Loading reconcile rules from {piperider_reconcile_path}')
             with open(piperider_reconcile_path, 'r') as frecon:
                 r_config = yaml.safe_load(frecon)
 

@@ -21,7 +21,7 @@ from piperider_cli.initializer import Initializer
 from piperider_cli.runner import Runner
 from piperider_cli.validator import Validator
 from piperider_cli.reconciler.reconciler import Reconciler
-from piperider_cli.reconciler.reconcile_report import ReconcileReport
+from piperider_cli.reconcile_report import ReconcileReport
 
 release_version = __version__ if sentry_env != 'development' else None
 
@@ -386,13 +386,17 @@ def reconcile(**kwargs):
     output = kwargs.get('output')
     project = kwargs.get('project')
 
-    reconciler = Reconciler(engine=None)
-    ret = reconciler.reconcile(output=output, report_dir=report_dir, project=project)
+    # reconciler = Reconciler(engine=None)
+    # ret = reconciler.reconcile(output=output, report_dir=report_dir, project=project)
+    ret = 0
 
     if ret == 0:
-        ReconcileReport.exec(output=output, report_dir=report_dir)
+        ReconcileReport.exec(None, output=output, report_dir=report_dir)
+    else:
+        sys.exit(ret)
 
 
 if __name__ == '__main__':
-    reconciler = Reconciler(engine=None)
-    reconciler.reconcile(project='pipeline_v2')
+    # reconciler = Reconciler(engine=None)
+    # reconciler.reconcile(project='pipeline_v2')
+    reconcile()
