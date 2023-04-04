@@ -10,6 +10,7 @@ interface Props extends Comparable, Selectable {
     | 'string'
     | 'numeric'
     | 'integer'
+    | 'date'
     | 'datetime'
     | 'boolean'
     | 'other';
