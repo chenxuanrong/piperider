@@ -5,6 +5,7 @@ import { BrowserTracing } from '@sentry/tracing';
 
 import { Loading } from './components/Layouts/Loading';
 import { NotFound } from './components/Common/NotFound';
+import { NewFeature } from './components/Common/NewFeature';
 import { SRTablesListPage } from './pages/SRTablesListPage';
 import { CRTablesListPage } from './pages/CRTablesListPage';
 import { RRTablesListPage } from './pages/RRTablesListPage';
@@ -158,6 +159,13 @@ function AppReconcile() {
           </Route>
 
           {/* todo: add assertions and bm metrics for reconcile */}
+          <Route path={ASSERTIONS_ROUTE_PATH}>
+            <NewFeature />
+          </Route>
+
+          <Route path={BM_ROUTE_PATH}>
+            <NewFeature />
+          </Route>
 
           <Route>
             <NotFound />

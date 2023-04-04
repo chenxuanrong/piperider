@@ -194,6 +194,31 @@ export function TableListItem({
             />
           </GridItem>
 
+          <GridItem>
+            <Flex
+              __css={{
+                color: 'gray.500',
+                display: 'flex',
+                gap: 3,
+                alignItems: 'center',
+                maxWidth: '100%',
+                overflowX: 'scroll',
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': {
+                  display: 'none',
+                },
+              }}
+            >
+              <Text mr={4}>
+                Common: {reconcileListEntry?.tables.common}
+                <p></p>
+                Base: {reconcileListEntry?.tables.base_only}
+                <p></p>
+                Target: {reconcileListEntry?.tables.target_only}
+              </Text>
+            </Flex>
+          </GridItem>
+
           <Flex gap={2}>
             <Link
               onClick={(event) => {

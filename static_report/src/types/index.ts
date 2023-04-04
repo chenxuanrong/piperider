@@ -26,10 +26,10 @@ export interface ReconcileColumnMetrics {
     | 'string'
     | 'numeric'
     | 'integer'
+    | 'date'
     | 'datetime'
     | 'boolean'
-    | 'other'
-    | 'date';
+    | 'other';
   /**
    * Metadata
    */
