@@ -138,36 +138,56 @@ A sample reconcile declaration
 
 ```yaml
 Reconciles:
-  source: domain # refer to source name in config.yml
-  name: <reconcile_name>  #description purpose
-  base:
-    table: address
-    join_key: address_id 
+  - name: migration
+    description: This project reconciles v1 and v2 migration
+    base_source: v1
+    target_source: v2
 
-  target:
-    table: address_beta
-    join_key: address_id
-  
-  rules:
-    - name: postcode
-      description: Compare postcode are equal for individual address_id
-      base_column: postcode
-      target_column: postcode
+    suites:
+    - name: address_table
+      description: Compare property address table in v1 and v2
+      base:
+        table: property_address
+        join_key: address_id
+      target:
+        table: address
+        join_key: id
+      
+      rules:
+        - name: street_name
+          description: Compare street name
+          base_column: street_name
+          target_column: street_name
+        - name: postcode
+          description: Compare postcode
+          base_column: postcode
+          target_column: postcode
+
+    - name: <another_suite>
+    
+  - name: <second_project>
+  - name: <third_project>
+
 ```
 
 Common Usage
 
 ```
-piperider reconcile    # reconcile base and target datasets
+piperider reconcile
+piperider reconcile --project migration
 ```
 
-The result is saved to `.piperider/outputs/latest/reconcile.json`
+The result is saved to `.piperider/reconciles/latest/reconcile.json`
 
+
+**Notes:**
+
+- `base_source` and `target_source` are defined in `config.yml` and `credential.yml`
 
 **Limitations:**
-- Base and target tables need to be located in the same schema
-- `join_key` needs to be a single column. List of columns configuration will be supported in the future.
-- If there are multiple reconcile block defined, only the top one will be executed.
+
+- `join_key` only support string now. If multiple columns are required to join base and target table, user can string concatenation. List of columns configuration will be supported in the future.
+- By default, the first project defined in `reconcile.yml` is executed. User can select project by pass `--project <name>`.
 
 
 
