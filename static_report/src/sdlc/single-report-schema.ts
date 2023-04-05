@@ -143,14 +143,7 @@ export interface ColumnSchema {
   /**
    * Generic types of schema, python-based
    */
-  type:
-    | 'string'
-    | 'numeric'
-    | 'integer'
-    | 'datetime'
-    | 'boolean'
-    | 'other'
-    | 'date';
+  type: 'string' | 'numeric' | 'integer' | 'datetime' | 'boolean' | 'other';
   /**
    * The column type definition in SQL database
    */

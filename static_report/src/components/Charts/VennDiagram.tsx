@@ -9,7 +9,6 @@ import {
   LegendItem,
   AnimationOptions,
 } from 'chart.js';
-import { Chart } from 'react-chartjs-2';
 import {
   VennDiagramChart,
   VennDiagramController,
@@ -18,6 +17,8 @@ import {
   ArcSlice,
   extractSets,
 } from 'chartjs-chart-venn';
+
+import { Chart } from 'react-chartjs-2';
 import { INFO_VAL_COLOR } from '../../utils';
 import { ReconcileTableMetrics } from '../../types';
 
@@ -27,13 +28,13 @@ import { ReconcileTableMetrics } from '../../types';
 
 export interface VennDiagramProps {
   data: ReconcileTableMetrics;
-  animation?: AnimationOptions<'venn'>['animation'];
+  animation?: AnimationOptions<'euler'>['animation'];
 }
 
 export function VennDiagram({ data, animation = false }: VennDiagramProps) {
   ChartJS.register(
-    // VennDiagramChart,
-    // VennDiagramController,
+    VennDiagramChart,
+    VennDiagramController,
     EulerDiagramChart,
     EulerDiagramController,
     ArcSlice,
@@ -54,9 +55,7 @@ export function VennDiagram({ data, animation = false }: VennDiagramProps) {
   );
 }
 
-export function getVennDiagramData(
-  data: ReconcileTableMetrics,
-): ChartData<'venn'> {
+export function getVennDiagramData(data: ReconcileTableMetrics): any {
   const { base_only, target_only, common } = data;
 
   return {
@@ -74,9 +73,7 @@ export function getVennDiagramData(
     ],
   };
 }
-export function getVennDiagramOptions(
-  data: ReconcileTableMetrics,
-): ChartOptions<'venn'> {
+export function getVennDiagramOptions(data: ReconcileTableMetrics): any {
   return {
     title: {
       display: true,

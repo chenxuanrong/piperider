@@ -172,7 +172,7 @@ export default function RRColumnDetailsPage({
       ];
       return result;
     }
-    if (data.generic_type === 'date' || data.generic_type === 'datetime') {
+    if (data.generic_type === 'datetime') {
       let result = [
         {
           name: 'total',
