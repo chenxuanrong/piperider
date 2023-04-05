@@ -386,8 +386,8 @@ def reconcile(**kwargs):
     output = kwargs.get('output')
     project = kwargs.get('project')
 
-    # reconciler = Reconciler(engine=None)
-    # ret = reconciler.reconcile(output=output, report_dir=report_dir, project=project)
+    reconciler = Reconciler(engine=None)
+    ret = reconciler.reconcile(output=output, report_dir=report_dir, project=project)
     ret = 0
 
     if ret == 0:

@@ -46,13 +46,13 @@ def setup_report_variables(template_html: str, is_single: bool, data, mode):
         variables = f'<script id="piperider-report-variables">\n' \
                     f'window.PIPERIDER_METADATA={metadata};' \
                     f'window.PIPERIDER_SINGLE_REPORT_DATA=JSON.parse(atob("{encoded_output}"));' \
-                    f'window.PIPERIDER_COMPARISON_REPORT_DATA="";</script>' \
+                    f'window.PIPERIDER_COMPARISON_REPORT_DATA="";' \
                     f'window.PIPERIDER_RECONCILE_REPORT_DATA="";</script>' 
     elif mode == 'comparison':        
         variables = f'<script id="piperider-report-variables">\n' \
                     f'window.PIPERIDER_METADATA={metadata};' \
                     f'window.PIPERIDER_SINGLE_REPORT_DATA="";' \
-                    f'window.PIPERIDER_COMPARISON_REPORT_DATA=JSON.parse(atob("{encoded_output}"));</script>' \
+                    f'window.PIPERIDER_COMPARISON_REPORT_DATA=JSON.parse(atob("{encoded_output}"));' \
                     f'window.PIPERIDER_RECONCILE_REPORT_DATA="";</script>'
     elif mode == 'reconcile':
         variables = f'<script id="piperider-report-variables">\n' \
