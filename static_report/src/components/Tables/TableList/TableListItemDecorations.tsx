@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Flex, Icon, Tooltip, Text } from '@chakra-ui/react';
-import { FiAlertCircle, FiGrid } from 'react-icons/fi';
+import { FiGrid } from 'react-icons/fi';
 import { tableListWidth } from '../../../utils/layout';
 export interface TableWrapperProps {
   children: ReactNode;

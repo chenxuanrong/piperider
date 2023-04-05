@@ -21,7 +21,7 @@ import {
 import { useLocalStorage } from 'react-use';
 
 import { ColumnSchema } from '../../../sdlc/single-report-schema';
-import { Comparable, ReconcileResults, Selectable } from '../../../types';
+import { Comparable, Selectable } from '../../../types';
 import {
   MASTER_LIST_DISPLAY_MODE,
   MASTER_LIST_SHOW_EXTRA,

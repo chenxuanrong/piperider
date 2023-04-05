@@ -139,7 +139,7 @@ function AppComparison() {
 function AppReconcile() {
   return (
     <Suspense fallback={<Loading />}>
-      <Router>
+      <Router hook={useHashLocation as BaseLocationHook}>
         <Switch>
           <Route
             path="/"

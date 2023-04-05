@@ -1,5 +1,4 @@
 import {
-  Box,
   Divider,
   Flex,
   Grid,
@@ -34,10 +33,9 @@ import {
   containsColumnQuantile,
   containsDataSummary,
   getIconForColumnType,
-  MetricsInfo,
 } from '../components';
 
-import { RR_TYPE_LABEL, MASTER_LIST_SHOW_EXTRA } from '../utils';
+import { MASTER_LIST_SHOW_EXTRA } from '../utils';
 
 import { ReconcileRuleHeader } from '../components/Tables/ReconcileRuleHeader';
 import { ReconcileColumnMetrics, ReconcileReportSchema } from '../types';
@@ -57,12 +55,12 @@ export default function RRColumnDetailsPage({
 }: Props) {
   useDocumentTitle('Reconcile Report: Table Details');
   const {
-    profiling: { base: baseTables, target: targetTables },
+    profiling: { base: baseTables },
     reconcile,
   } = data;
 
   const [, setLocation] = useLocation();
-  const [tabIndex, setTabIndex] = useState<number>(0);
+  const [tableIndex, setTabIndex] = useState<number>(0);
   const isTableDetailsView = ruleName.length === 0;
   const setReportData = useReportStore((s) => s.setReportRawData);
   const [showExtra] = useLocalStorage(MASTER_LIST_SHOW_EXTRA, '');

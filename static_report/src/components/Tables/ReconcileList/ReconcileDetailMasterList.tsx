@@ -1,12 +1,6 @@
 import { Box, Flex, Select, Text, Icon } from '@chakra-ui/react';
-import {
-  Comparable,
-  ReconcileColumnMetrics,
-  ReconcileResults,
-  Selectable,
-} from '../../../types';
+import { Comparable, ReconcileResults, Selectable } from '../../../types';
 import { FiGrid } from 'react-icons/fi';
-import { string } from 'zod';
 import { ReconcileDetailListItem } from './ReconcileDetailListItem';
 
 interface Props extends Selectable, Comparable {
@@ -28,7 +22,6 @@ export function ReconcileDetailMasterList({
   onNavBack,
   onNavToTableDetail,
 }: Props) {
-  const { name, metadata, tables, columns } = reconcileEntry;
   const isActive = currentRule === '' && currentReconcile;
   console.log(`${currentReconcile}, ${currentRule}`);
   console.log(isActive);

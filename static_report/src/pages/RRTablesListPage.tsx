@@ -1,6 +1,6 @@
 import { TableActionBar, TableListItem } from '../components';
 import { Main } from '../components/Common/Main';
-import { ComparisonReportSchema, ReconcileReportSchema } from '../types';
+import { ReconcileReportSchema } from '../types';
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Flex, Text, Grid, useDisclosure } from '@chakra-ui/react';
@@ -9,7 +9,6 @@ import { useLocation } from 'wouter';
 
 import { tableListGridTempCols, tableListWidth } from '../utils/layout';
 import { useReportStore } from '../utils/store';
-import { TableColumnSchemaList } from '../components/Tables/TableList/TableColumnSchemaList';
 import { CommonModal } from '../components/Common/CommonModal';
 import { useAmplitudeOnMount } from '../hooks';
 import { AMPLITUDE_EVENTS, CR_TYPE_LABEL } from '../utils';
@@ -37,7 +36,7 @@ export function RRTablesListPage({ data }: Props) {
     description: data.description,
   });
   const { reconcileResults, assertionsOnly } = useReportStore.getState();
-  const { title, reconcile } = reconcileResults;
+  const { reconcile } = reconcileResults;
 
   return (
     <Main isSingleReport={false}>

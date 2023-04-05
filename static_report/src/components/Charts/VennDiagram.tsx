@@ -1,12 +1,8 @@
 import {
-  ChartOptions,
   Chart as ChartJS,
   Tooltip,
-  ChartData,
   LinearScale,
   CategoryScale,
-  Legend,
-  LegendItem,
   AnimationOptions,
 } from 'chart.js';
 import {
@@ -15,11 +11,9 @@ import {
   EulerDiagramChart,
   EulerDiagramController,
   ArcSlice,
-  extractSets,
 } from 'chartjs-chart-venn';
 
 import { Chart } from 'react-chartjs-2';
-import { INFO_VAL_COLOR } from '../../utils';
 import { ReconcileTableMetrics } from '../../types';
 
 /**

@@ -13,18 +13,13 @@ import {
   TableItemName,
 } from '../TableList/TableListItemDecorations';
 
-import { Comparable, Selectable } from '../../../types';
-import { formatColumnValueWith, formatNumber } from '../../../utils/formatters';
-import { NoData } from '../../Layouts';
+import { Selectable } from '../../../types';
 
 import {
   tableListGridTempCols,
   tableListMaxWidth,
-  tableListWidth,
 } from '../../../utils/layout';
-import { CompTableColEntryItem, ReportState } from '../../../utils/store';
-import { NO_DESCRIPTION_MSG } from '../../Common/constant';
-import { getIconForColumnType } from '../../Columns';
+import { CompTableColEntryItem } from '../../../utils/store';
 
 interface Props extends Selectable {
   reconcileEntry?: CompTableColEntryItem;
@@ -38,9 +33,8 @@ export function ReconcileListItem({
   onSelect,
   ...props
 }: Props & FlexProps) {
-  const [baseName, targetName] = reconcileEntry || [];
+  const [baseName] = reconcileEntry || [];
 
-  const reconileDescription = description || NO_DESCRIPTION_MSG;
   return (
     <TableWrapper>
       <Grid

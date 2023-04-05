@@ -1,6 +1,4 @@
-import { Divider, Text, Box, Flex, FlexProps, Tooltip } from '@chakra-ui/react';
-import { SubTitle } from 'chart.js';
-import { renderChartUnavailableMsg } from '../Charts/utils';
+import { Divider, Text, Flex, FlexProps, Tooltip } from '@chakra-ui/react';
 import { NO_VALUE } from '../Columns';
 
 export interface ColumnComparisonStatsSchema {

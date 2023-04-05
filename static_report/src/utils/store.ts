@@ -6,17 +6,13 @@ import {
   ComparableData,
   ComparisonReportSchema,
   ReconcileReportSchema,
-  ReconcileResults,
   SaferSRSchema,
   SaferTableSchema,
 } from '../types/index';
 import { create } from 'zustand';
 import { transformAsNestedBaseTargetRecord } from './transformers';
 import { formatReportTime } from './formatters';
-import {
-  ColumnName,
-  getAssertionStatusCountsFromList,
-} from '../components/Tables';
+import { getAssertionStatusCountsFromList } from '../components/Tables';
 type ComparableReport = Partial<ComparisonReportSchema> &
   Partial<ReconcileReportSchema>; //to support single-run data structure
 type ComparableMetadata = {
@@ -97,23 +93,14 @@ const getReportTitle = (rawData: ComparableReport) => {
 };
 
 const getReconcile = (rawData: ComparableReport) => {
-  // get profiling results, seems different to base/input, need to figure out
-  // a way to fit into existed code
   const project = rawData.project;
-  const profiling = rawData.profiling;
   const reconcile = rawData.reconcile;
   const description = rawData.description;
 
-  // const title = reconcile?.metadata?.name ?? '';
-  // const metadata = reconcile?.metadata;
-  // const tables = reconcile?.tables;
-  // const columns = reconcile?.columns;
   const resultObj = {
     title: project,
     reconcile: reconcile,
     description: description,
-    // tables: tables,
-    // columns: columns,
   };
   return resultObj;
 };

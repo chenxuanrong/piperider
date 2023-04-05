@@ -1,5 +1,5 @@
-import { Box, Flex, FlexProps, Text } from '@chakra-ui/react';
-import { Comparable, ReconcileColumnMetrics, Selectable } from '../../../types';
+import { Flex, FlexProps } from '@chakra-ui/react';
+import { Comparable, Selectable } from '../../../types';
 import { ColumnName } from '../../Tables';
 import { getIconForColumnType } from '../../Columns/utils';
 

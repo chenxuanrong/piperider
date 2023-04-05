@@ -1,4 +1,4 @@
-import { Divider, Text, Box, Flex } from '@chakra-ui/react';
+import { Divider, Text, Box } from '@chakra-ui/react';
 import { AnimationOptions } from 'chart.js';
 
 import { renderChartUnavailableMsg } from '../Charts/utils';

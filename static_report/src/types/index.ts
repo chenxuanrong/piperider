@@ -9,7 +9,6 @@ import {
   SingleReportSchema,
   TableSchema,
 } from '../sdlc/single-report-schema';
-import { StringifyContext } from 'yaml/dist/stringify/stringify';
 
 export * from '../sdlc';
 

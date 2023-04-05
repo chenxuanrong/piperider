@@ -5,7 +5,6 @@ import {
   getComparisonDataPath,
   getEmbeddedIndexHTML,
   getFileData,
-  getMetadata,
   isE2E,
   log,
   PATH_TO_INDEX,
