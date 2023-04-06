@@ -8,7 +8,11 @@ from ruamel.yaml import CommentedMap, CommentedSeq
 
 from piperider_cli import round_trip_load_yaml, safe_load_yaml
 from piperider_cli.datasource import DATASOURCE_PROVIDERS, DataSource
-from piperider_cli.reconciler.reconcile_rule import ReconcileRule, ColumnReconcileRule
+from piperider_cli.reconciler.reconcile_rule import (
+    ReconcileSuite, 
+    ColumnReconcileRule, 
+    ReconcileProject,
+)
 from piperider_cli.error import \
     PipeRiderConfigError, \
     PipeRiderConfigTypeError, \
@@ -20,15 +24,18 @@ from piperider_cli.error import \
     DbtProfileBigQueryAuthWithTokenUnsupportedError, \
     ReconcileRuleAssertionError
 
+# from piperider_cli.logger import get_logger
+
 PIPERIDER_WORKSPACE_NAME = '.piperider'
 PIPERIDER_CONFIG_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'config.yml')
 PIPERIDER_CREDENTIALS_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'credentials.yml')
-PIPERIDER_RECONCILE_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'reconcile.yml')
+PIPERIDER_RECONCILE_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, 'reconcile.yml') if os.environ.get('PIPERIDER_RECONCILE_PATH') is None else os.environ.get('PIPERIDER_RECONCILE_PATH')
 
 # ref: https://docs.getdbt.com/dbt-cli/configure-your-profile
 DBT_PROFILES_DIR_DEFAULT = '~/.dbt/'
 DBT_PROFILE_FILE = 'profiles.yml'
 
+# logger = get_logger(__name__)
 
 class Configuration(object):
     """
@@ -36,7 +43,7 @@ class Configuration(object):
     at $PROJECT_ROOT/.piperider/config.yml
     """
 
-    def __init__(self, dataSources: List[DataSource], reconcileRules: List[ReconcileRule]=None, **kwargs):
+    def __init__(self, dataSources: List[DataSource], reconcileRules: List[ReconcileSuite]=None, **kwargs):
         self.dataSources: List[DataSource] = dataSources
         self.profiler_config = kwargs.get('profiler', {}) or {}
         self.includes = kwargs.get('includes', None)
@@ -45,7 +52,7 @@ class Configuration(object):
         self.tables = kwargs.get('tables', {})
         self.telemetry_id = kwargs.get('telemetry_id', None)
         self.report_dir = self._to_report_dir(kwargs.get('report_dir', '.'))
-        self.reconcileRules: List[ReconcileRule] = reconcileRules
+        self.reconcileRules: List[ReconcileProject] = reconcileRules
 
         self._verify_input_config()
         self.includes = [str(t) for t in self.includes] if self.includes else self.includes
@@ -153,6 +160,7 @@ class Configuration(object):
         """
         credentials = None
 
+
         config = safe_load_yaml(piperider_config_path)
         if config is None:
             raise PipeRiderConfigError(piperider_config_path)
@@ -207,50 +215,108 @@ class Configuration(object):
             data_sources.append(data_source)
 
         # Reconcile rules is optional
-        reconcile_rules: List[ReconcileRule] = []
+        reconcile_rules: List[ReconcileProject] = []
 
         if os.path.exists(piperider_reconcile_path):
+            # logger.info(f'Loading reconcile rules from {piperider_reconcile_path}')
             with open(piperider_reconcile_path, 'r') as frecon:
                 r_config = yaml.safe_load(frecon)
 
-            reconcile_config = r_config.get('Reconciles')
-            if reconcile_config:
-                reconcile_source_name = reconcile_config.get('source')
-                reconcile_set_name = reconcile_config.get('name')
-                base_table = reconcile_config.get('base', {}).get('table')
-                base_join_key = reconcile_config.get('base', {}).get('join_key')
+            r_projects = r_config.get('Reconciles')
+            if r_projects:
+                for r_project in r_projects:
 
-                target_table = reconcile_config.get('target', {}).get('table')
-                target_join_key = reconcile_config.get('target', {}).get('join_key')
+                    # reconcile_source_name = reconcile_config.get('source')
+                    reconcile_project = r_project.get('name')
+                    description = r_project.get('description')
+                    base_source = r_project.get('base_source')
+                    target_source = r_project.get('target_source')
 
-                rules = []
-                for r in reconcile_config.get('rules', []):
-                    rule_name = r.get('name')
-                    if not rule_name:
-                        raise ReconcileRuleAssertionError()
-
-                    c_rule = ColumnReconcileRule(
-                        base_column=base_join_key,
-                        target_column=target_join_key,
-                        base_compare_key=r.get('base_column'),
-                        target_compare_key=r.get('target_column'),
-                        name=rule_name,
-                        description=r.get('description'),
+                    project = ReconcileProject(
+                        name=reconcile_project,
+                        description=description,
+                        base_source=base_source,
+                        target_source=target_source,
+                        suites=[],                        
                     )
 
-                    rules.append(c_rule)
+                    suites = r_project.get('suites', [])
+                    for r_suite in suites:
+                        suite_name = r_suite.get('name')
+                        base_table = r_suite.get('base', {}).get('table')
+                        target_table = r_suite.get('target', {}).get('table')
+                        base_join_key = r_suite.get('base', {}).get('join_key')
+                        target_join_key = r_suite.get('target', {}).get('join_key')
 
-                reconcile_rules.append(
-                    ReconcileRule(
-                        source=reconcile_source_name,
-                        name=reconcile_set_name,
-                        base_table=base_table,
-                        target_table=target_table,
-                        base_join_key=base_join_key,
-                        target_join_key=target_join_key,
-                        column_reconcile_rules=rules
-                    )
-                )
+                        suite = ReconcileSuite(
+                            name=suite_name, 
+                            description=r_suite.get('description'),
+                            base_table=base_table,
+                            target_table=target_table,
+                            base_join_key=base_join_key,
+                            target_join_key=target_join_key,
+                            column_reconcile_rules=[],
+                        )
+
+                        r_rules = r_suite.get('rules', [])
+                        for r_rule in r_rules:
+                            rule_name = r_rule.get('name')
+                            if not rule_name:
+                                raise ReconcileRuleAssertionError()
+
+                            rule = ColumnReconcileRule(
+                                name=rule_name,
+                                description=r_rule.get('description'),
+                                base_column=base_join_key,
+                                target_column=target_join_key,
+                                base_compare_column=r_rule.get('base_column'),
+                                target_compare_column=r_rule.get('target_column')
+                            )
+
+                            suite.add_rule(rule)                        
+                        
+                        project.add_suite(suite)
+                    
+                    reconcile_rules.append(project)
+                    
+
+                    #     reconcile_rules.append(suite)
+                    # base_table = r_project.get('base', {}).get('table')
+                    # base_join_key = r_project.get('base', {}).get('join_key')
+
+                    # target_table = r_project.get('target', {}).get('table')
+                    # target_join_key = r_project.get('target', {}).get('join_key')
+
+                    # rules = []
+                    # for r in r_project.get('rules', []):
+                    #     rule_name = r.get('name')
+                    #     if not rule_name:
+                    #         raise ReconcileRuleAssertionError()
+
+                    #     c_rule = ColumnReconcileRule(
+                    #         base_column=base_join_key,
+                    #         target_column=target_join_key,
+                    #         base_compare_key=r.get('base_column'),
+                    #         target_compare_key=r.get('target_column'),
+                    #         name=rule_name,
+                    #         description=r.get('description'),
+                    #     )
+
+                    #     rules.append(c_rule)
+
+                    # reconcile_rules.append(
+                    #     ReconcileSuite(
+                    #         base_source=base_source,
+                    #         target_source=target_source,
+                    #         description=description,
+                    #         name=reconcile_project,
+                    #         base_table=base_table,
+                    #         target_table=target_table,
+                    #         base_join_key=base_join_key,
+                    #         target_join_key=target_join_key,
+                    #         column_reconcile_rules=rules
+                    #     )
+                    # )
 
 
         return cls(
@@ -409,6 +475,11 @@ tables:
         if datasource in self.dataSources:
             self.dataSources.remove(datasource)
 
+    def get_reconcile_project(self, name) -> ReconcileProject:
+        for rule in self.reconcileRules:
+            if rule.name == name:
+                return rule            
+
 
 def _load_dbt_profile(path):
     from jinja2 import Environment, FileSystemLoader
@@ -463,3 +534,5 @@ def _load_credential_from_dbt_profile(dbt_profile, profile_name, target_name):
         dbname = credential.get('dbname')
         credential['endpoint'] = f'{host}:{port}/{dbname}'
     return credential
+
+

@@ -1,0 +1,110 @@
+{
+  "title": "ReconcileReportSchema",
+  "type": "object",
+  "required": [
+    "id",
+    "project",
+    "data_source",
+    "profiling",
+    "reconcile",
+    "created_at"
+  ],
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "data_source": {
+      "type": "object",
+      "description": "Base source and Target source for reconcile project"
+    },
+    "project": {
+      "type": "string",
+      "description": "Reconcile project name"
+    },
+    "profiling": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "type": "object"
+        },
+        "target": {
+          "type": "object"
+        }
+      }
+    },
+    "reconcile": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/reconcile_metric"
+      }
+    }
+  },
+  "definitions": {
+    "reconcile_metric": {
+      "title": "ReconcileMetric",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Reconcile suite name"
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "base_table": {
+              "type": "string"
+            },
+            "target_table": {
+              "type": "string"
+            },
+            "base_column": {
+              "type": "string"
+            },
+            "target_column": {
+              "type": "string"
+            }
+          }
+        },
+        "tables": {
+          "type": "object",
+          "properties": {
+            "base_only": {
+              "type": "integer"
+            },
+            "target_only": {
+              "type": "integer"
+            },
+            "common": {
+              "type": "integer"
+            },
+            "status": {
+              "type": "boolean"
+            }
+          },
+          "required": ["base_only", "target_only", "common", "status"]
+        },
+        "columns": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

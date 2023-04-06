@@ -5,13 +5,16 @@ import { BrowserTracing } from '@sentry/tracing';
 
 import { Loading } from './components/Layouts/Loading';
 import { NotFound } from './components/Common/NotFound';
+import { NewFeature } from './components/Common/NewFeature';
 import { SRTablesListPage } from './pages/SRTablesListPage';
 import { CRTablesListPage } from './pages/CRTablesListPage';
+import { RRTablesListPage } from './pages/RRTablesListPage';
 import { useHashLocation } from './hooks/useHashLcocation';
 import {
   ASSERTIONS_ROUTE_PATH,
   BM_ROUTE_PATH,
   COLUMN_DETAILS_ROUTE_PATH,
+  RECONCILE_COLUMNS_DETAILS_ROUTE_PATH,
 } from './utils/routes';
 import { SRAssertionListPage } from './pages/SRAssertionListPage';
 import { CRAssertionListPage } from './pages/CRAssertionListPage';
@@ -39,6 +42,7 @@ if (sentryDns && process.env.NODE_ENV !== 'development') {
 
 const SRColumnDetailsPage = lazy(() => import('./pages/SRColumnDetailsPage'));
 const CRColumnDetailsPage = lazy(() => import('./pages/CRColumnDetailsPage'));
+const RRColumnDetailsPage = lazy(() => import('./pages/RRColumnDetailsPage'));
 
 function AppSingle() {
   return (
@@ -132,11 +136,56 @@ function AppComparison() {
   );
 }
 
+function AppReconcile() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Router hook={useHashLocation as BaseLocationHook}>
+        <Switch>
+          <Route
+            path="/"
+            component={() => (
+              <RRTablesListPage data={window.PIPERIDER_RECONCILE_REPORT_DATA} />
+            )}
+          />
+
+          <Route path={RECONCILE_COLUMNS_DETAILS_ROUTE_PATH}>
+            {({ reconcileName, ruleName }) => (
+              <RRColumnDetailsPage
+                ruleName={decodeURIComponent(ruleName || '')}
+                reconcileName={decodeURIComponent(reconcileName || '')}
+                data={window.PIPERIDER_RECONCILE_REPORT_DATA || {}}
+              />
+            )}
+          </Route>
+
+          {/* todo: add assertions and bm metrics for reconcile */}
+          <Route path={ASSERTIONS_ROUTE_PATH}>
+            <NewFeature />
+          </Route>
+
+          <Route path={BM_ROUTE_PATH}>
+            <NewFeature />
+          </Route>
+
+          <Route>
+            <NotFound />
+          </Route>
+        </Switch>
+      </Router>
+    </Suspense>
+  );
+}
+
 function App() {
-  if (process.env.REACT_APP_SINGLE_REPORT === 'true') {
-    return <AppSingle />;
-  } else {
-    return <AppComparison />;
+  switch (process.env.REACT_APP_REPORT) {
+    case 'SINGLE':
+      return <AppSingle />;
+    case 'COMPARISON':
+      return <AppComparison />;
+    case 'RECONCILE':
+      return <AppReconcile />;
+    default:
+      return <AppSingle />;
   }
 }
 

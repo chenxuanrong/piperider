@@ -1,5 +1,6 @@
 import { ComparisonReportSchema } from 'comparison-report-schema.d';
 import { SingleReportSchema } from 'single-report-schema.d';
+import { ReconcileReportSchema } from '../types';
 
 declare global {
   interface PipeRiderMetadata {
@@ -14,6 +15,7 @@ declare global {
   interface Window {
     PIPERIDER_SINGLE_REPORT_DATA: SingleReportSchema;
     PIPERIDER_COMPARISON_REPORT_DATA: ComparisonReportSchema;
+    PIPERIDER_RECONCILE_REPORT_DATA: ReconcileReportSchema;
     PIPERIDER_METADATA: PipeRiderMetadata;
   }
   namespace NodeJS {

@@ -35,23 +35,31 @@ def _validate_input_result(result):
     return True
 
 
-def setup_report_variables(template_html: str, is_single: bool, data):
+def setup_report_variables(template_html: str, is_single: bool, data, mode):
     if isinstance(data, dict):
         output = json.dumps(data)
     else:
         output = data
     metadata = json.dumps(prepare_piperider_metadata())
     encoded_output = b64encode(bytes(output, "utf-8")).decode("ascii")
-    if is_single:
+    if mode == 'single':
         variables = f'<script id="piperider-report-variables">\n' \
                     f'window.PIPERIDER_METADATA={metadata};' \
                     f'window.PIPERIDER_SINGLE_REPORT_DATA=JSON.parse(atob("{encoded_output}"));' \
-                    f'window.PIPERIDER_COMPARISON_REPORT_DATA="";</script>'
-    else:
+                    f'window.PIPERIDER_COMPARISON_REPORT_DATA="";' \
+                    f'window.PIPERIDER_RECONCILE_REPORT_DATA="";</script>' 
+    elif mode == 'comparison':        
         variables = f'<script id="piperider-report-variables">\n' \
                     f'window.PIPERIDER_METADATA={metadata};' \
                     f'window.PIPERIDER_SINGLE_REPORT_DATA="";' \
-                    f'window.PIPERIDER_COMPARISON_REPORT_DATA=JSON.parse(atob("{encoded_output}"));</script>'
+                    f'window.PIPERIDER_COMPARISON_REPORT_DATA=JSON.parse(atob("{encoded_output}"));' \
+                    f'window.PIPERIDER_RECONCILE_REPORT_DATA="";</script>'
+    elif mode == 'reconcile':
+        variables = f'<script id="piperider-report-variables">\n' \
+                    f'window.PIPERIDER_METADATA={metadata};' \
+                    f'window.PIPERIDER_SINGLE_REPORT_DATA="";' \
+                    f'window.PIPERIDER_COMPARISON_REPORT_DATA="";' \
+                    f'window.PIPERIDER_RECONCILE_REPORT_DATA=JSON.parse(atob("{encoded_output}"));</script>'
     html_parts = re.sub(r'<script id="piperider-report-variables">.+?</script>', '#PLACEHOLDER#', template_html).split(
         '#PLACEHOLDER#')
     html = html_parts[0] + variables + html_parts[1]
@@ -61,7 +69,7 @@ def setup_report_variables(template_html: str, is_single: bool, data):
 def _generate_static_html(result, html, output_path):
     filename = os.path.join(output_path, "index.html")
     with open(filename, 'w') as f:
-        html = setup_report_variables(html, True, result)
+        html = setup_report_variables(html, True, result, 'single')
         f.write(html)
 
 

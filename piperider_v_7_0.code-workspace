@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "static_rSportseport/node_modules/typescript/lib"
+		"colorize.languages": [
+			"javascript",
+		]
+	}
+}

@@ -100,7 +100,7 @@ class Profiler:
         if result is not None:
             return result
         else:
-            return Table(subject.table, MetaData(), autoload_with=self.engine, schema=subject.get_lower_schema())
+            return Table(subject.table, MetaData(bind=self.engine), autoload_with=self.engine, schema=subject.get_lower_schema())
 
     def profile(self, subjects: List[ProfileSubject] = None) -> dict:
         """

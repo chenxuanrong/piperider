@@ -443,10 +443,17 @@ def _get_table_list(table, default_schema, dbt_adapter):
     return tables, None
 
 
-def prepare_default_output_path(filesystem: FileSystem, created_at, ds):
-    latest_symlink_path = os.path.join(filesystem.get_output_dir(), 'latest')
+def prepare_default_output_path(filesystem: FileSystem, created_at, ds, task='run'):
     latest_source = f"{ds.name}-{convert_to_tzlocal(created_at).strftime('%Y%m%d%H%M%S')}"
-    output_path = os.path.join(filesystem.get_output_dir(), latest_source)
+
+    if task == 'run':
+        latest_symlink_path = os.path.join(filesystem.get_output_dir(), 'latest')
+        output_path = os.path.join(filesystem.get_output_dir(), latest_source)
+    elif task == 'reconcile':
+        latest_symlink_path = os.path.join(filesystem.get_reconcile_dir(), 'latest')
+        output_path = os.path.join(filesystem.get_reconcile_dir(), latest_source)
+    else:
+        raise ValueError(f"Unknown task: {task}")
 
     if not os.path.exists(output_path):
         os.makedirs(output_path, exist_ok=True)

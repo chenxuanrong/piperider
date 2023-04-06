@@ -9,7 +9,18 @@ type Props = {
 };
 
 export function TableActionBar({ children }: Props) {
-  const { reportOnly } = useReportStore.getState();
+  const { reportOnly, reconcileResults } = useReportStore.getState();
+  console.log(reconcileResults);
+  let header;
+  let label;
+  if (!reconcileResults) {
+    header = reportOnly?.base?.datasource.name || NO_VALUE;
+    label = reportOnly?.base?.datasource.type || NO_VALUE;
+  } else {
+    header = reconcileResults.title;
+    label = reconcileResults.description;
+    console.log(reconcileResults);
+  }
 
   return (
     <Flex
@@ -22,11 +33,9 @@ export function TableActionBar({ children }: Props) {
     >
       <Flex gap={1} alignItems="center">
         <Icon as={FiDatabase} mr={2} />
-        <Text fontSize="large">
-          {reportOnly?.base?.datasource.name || NO_VALUE}
-        </Text>
+        <Text fontSize="large">{header}</Text>
         <Tooltip
-          label={reportOnly?.base?.datasource.type || NO_VALUE}
+          label={label}
           prefix=""
           placement="right-end"
           shouldWrapChildren

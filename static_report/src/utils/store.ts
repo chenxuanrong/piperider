@@ -5,14 +5,16 @@ import {
   ColumnSchema,
   ComparableData,
   ComparisonReportSchema,
+  ReconcileReportSchema,
   SaferSRSchema,
   SaferTableSchema,
 } from '../types/index';
-import create from 'zustand';
+import { create } from 'zustand';
 import { transformAsNestedBaseTargetRecord } from './transformers';
 import { formatReportTime } from './formatters';
 import { getAssertionStatusCountsFromList } from '../components/Tables';
-type ComparableReport = Partial<ComparisonReportSchema>; //to support single-run data structure
+type ComparableReport = Partial<ComparisonReportSchema> &
+  Partial<ReconcileReportSchema>; //to support single-run data structure
 type ComparableMetadata = {
   added?: number;
   deleted?: number;
@@ -43,6 +45,7 @@ export interface ReportState {
    * Business Metrics (zipped 2D arrays to data column format)
    */
   BMOnly?: ComparableData<BusinessMetric[]>;
+  reconcileResults?: any;
 }
 
 interface ReportSetters {
@@ -51,6 +54,7 @@ interface ReportSetters {
 
 const getReportOnly = (rawData: ComparableReport) => {
   let resultObj = {} as ComparableData<Omit<SaferSRSchema, 'tables'>>;
+  // let resultObj = {};
   if (rawData.base) {
     const { tables, ...reportOnly } = rawData.base;
     resultObj = { base: reportOnly };
@@ -88,8 +92,22 @@ const getReportTitle = (rawData: ComparableReport) => {
   return title;
 };
 
+const getReconcile = (rawData: ComparableReport) => {
+  const project = rawData.project;
+  const reconcile = rawData.reconcile;
+  const description = rawData.description;
+
+  const resultObj = {
+    title: project,
+    reconcile: reconcile,
+    description: description,
+  };
+  return resultObj;
+};
+
 /**
- * returns an aligned, compared (base/target), and normalized entries for profiler's tables and columns, making it easier to iterate and render over them. Each entry is equipped with a 3-element entry item that contains [key, {base, target}, metadata].
+ * returns an aligned, compared (base/target), and normalized entries for profiler's tables and columns, making it easier to iterate and render over them.
+ * Each entry is equipped with a 3-element entry item that contains [key, {base, target}, metadata].
  * Currently Assertions is not added to metadata yet.
  */
 const getTableColumnsOnly = (rawData: ComparableReport) => {
@@ -230,6 +248,9 @@ export const useReportStore = create<ReportState & ReportSetters>()(function (
       const assertionsOnly = getAssertionsOnly(rawData);
       /** Report Business Metrics (BM) */
       const BMOnly = getBusinessMetrics(rawData);
+      /** Reconcile Report */
+      const reconcileResults = getReconcile(rawData);
+      /** Reconcile Profiling */
 
       const resultState: ReportState = {
         rawData,
@@ -240,6 +261,7 @@ export const useReportStore = create<ReportState & ReportSetters>()(function (
         tableColumnsOnly,
         assertionsOnly,
         BMOnly,
+        reconcileResults,
       };
 
       // final setter
