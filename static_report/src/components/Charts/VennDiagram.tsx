@@ -53,7 +53,7 @@ export function getVennDiagramData(data: ReconcileTableMetrics): any {
   const { base_only, target_only, common } = data;
 
   return {
-    labels: ['base', 'target', 'base ∩ target'],
+    labels: ['target', 'base', 'base ∩ target'],
     datasets: [
       {
         label: 'reconcile',

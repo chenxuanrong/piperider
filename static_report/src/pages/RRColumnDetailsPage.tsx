@@ -25,6 +25,7 @@ import {
 } from '../utils/layout';
 import { DataSummaryWidget } from '../components/Widgets/DataSummaryWidget';
 import { QuantilesWidget } from '../components/Widgets/QuantilesWidget';
+import { ChartTabsWidget } from '../components/Widgets/ChartTabsWidget';
 import {
   DataCompositionWidget,
   TableColumnHeader,
@@ -55,7 +56,7 @@ export default function RRColumnDetailsPage({
 }: Props) {
   useDocumentTitle('Reconcile Report: Table Details');
   const {
-    profiling: { base: baseTables },
+    profiling: { base: baseTables, target: targetTables },
     reconcile,
   } = data;
 
@@ -88,7 +89,7 @@ export default function RRColumnDetailsPage({
   // const baseSource = currentReconcileEntry?.metadata.base_source || '';
   // const targetSource = currentReconcileEntry?.metadata.target_source || '';
   const baseDataTable = baseTables[baseTableName];
-  const targetDataTable = baseTables[targetTableName];
+  const targetDataTable = targetTables[targetTableName];
   const baseDataColumns = baseDataTable?.columns || {};
   const targetDataColumns = targetDataTable?.columns || {};
 
@@ -414,6 +415,30 @@ export default function RRColumnDetailsPage({
                 </Grid>
               </GridItem>
             )}
+            <GridItem
+              colSpan={2}
+              gridRow={'span 1'}
+              // rowSpan={hasQuantile ? 3 : 2}
+              minWidth={0}
+              px={10}
+              py={4}
+              bg={'gray.50'}
+            >
+              <Grid templateColumns={'1fr 1fr'} gap={8}>
+                <ChartTabsWidget
+                  baseColumnDatum={baseColumnDatum}
+                  hasAnimation
+                  tabIndex={tableIndex}
+                  onSelectTab={(i) => setTabIndex(i)}
+                />
+                <ChartTabsWidget
+                  baseColumnDatum={targetColumnDatum}
+                  hasAnimation
+                  tabIndex={tableIndex}
+                  onSelectTab={(i) => setTabIndex(i)}
+                />
+              </Grid>
+            </GridItem>
             {/* Reconcile Stats Block */}
             <GridItem colSpan={2} gridRow={'span 1'} p={9} bg={'gray.50'}>
               <Grid templateColumns={'1fr 1fr'} gap={8}>
