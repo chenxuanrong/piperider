@@ -230,3 +230,10 @@ export function formatTitleCase(input?: string) {
   const rest = input.slice(1).toLowerCase();
   return `${start}${rest}`;
 }
+
+export function formatDecimalAsPercent(input: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    maximumFractionDigits: 2,
+  }).format(input);
+}

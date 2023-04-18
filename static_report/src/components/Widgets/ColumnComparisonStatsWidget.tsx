@@ -6,6 +6,7 @@ export interface ColumnComparisonStatsSchema {
    *  The total count of base value is equal to target value
    */
   equal?: number;
+  common?: number;
   case_insensitive_equal?: number;
   trim_white_space_equal?: number;
   not_comparable?: number;
@@ -24,7 +25,8 @@ const reconcileMetricsDescrption = {
   // case_insensitive_equal:
   //   'Comparison of string comparison in case insensitive mode',
   // trim_white_space_equal: 'Equal when white space is trimmed',
-  not_comparable: 'Not comparable case e.g. null vesus value',
+  common: 'Both base and target provides a value',
+  not_comparable: 'Either of base or target does not provide a value',
   total: 'Total records',
   equal_within_5_difference:
     'Numeric value comparison when absolute difference is within 5 perc of base value',
@@ -42,6 +44,7 @@ const reconcileMetricsDescrption = {
 
 const reconcileMetricsSlug = {
   equal: 'Exactly Equal',
+  common: 'Comparable',
   not_comparable: 'Not Comparable',
   total: 'Total',
   equal_within_5_difference: 'Within 5% Difference',

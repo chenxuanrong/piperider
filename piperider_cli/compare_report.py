@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 import inquirer
 import readchar
@@ -518,7 +518,7 @@ class CompareReport(object):
         else:
             return None
 
-    def select_two_reports(self, action='compare') -> (RunOutput, RunOutput):
+    def select_two_reports(self, action='compare') -> Tuple[RunOutput, RunOutput]:
         """
         Select multiple files from a list of files.
         """

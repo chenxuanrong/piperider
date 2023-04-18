@@ -349,6 +349,8 @@ class Reconciler:
     ):
         result = {}
 
+        console = Console()
+
         base_db = self.bengine.url.database.split("/")[0]
         target_db = self.tengine.url.database.split("/")[0]
 
@@ -457,6 +459,7 @@ class Reconciler:
                     target_db,
                 )
             elif base_compare_key.type != target_compare_key.type:
+                console.print(f'base type {base_compare_key.type} is mismatched with target type {target_compare_key.type}')
                 reconciler = MismatchDataTypeColumnReconciler()
             else:
                 raise UnhandableColumnTypeError
@@ -617,6 +620,7 @@ class StringColumnReconciler(ColumnReconciler):
                 stats as (
                     select
                         count(*) as total,
+                        sum(case when bcid is not null and tcid is not null then 1 else 0 end) as common,
                         sum(case when bcid = tcid then 1 else 0 end) as equal,
                         sum(case when lower(bcid) = lower(tcid) then 1 else 0 end) as equal_case_insensitive,
                         sum(case when trim(lower(bcid)) = trim(lower(tcid)) then 1 else 0 end) as equal_trim_whitespace,
@@ -630,6 +634,7 @@ class StringColumnReconciler(ColumnReconciler):
             result = conn.execute(text(query)).fetchone()
             (
                 _total,
+                _common,
                 _equal,
                 _equal_case_insensitive,
                 _equal_trim_whitespace,
@@ -646,15 +651,16 @@ class StringColumnReconciler(ColumnReconciler):
                 "base_compare_key": self.base_compare_col.name,
                 "target_compare_key": self.target_compare_col.name,
                 "total": _total,
+                "common": _common,
                 "equal": _equal,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
                 "equal_case_insensitive": _equal_case_insensitive,
                 "equal_trim_whitespace": _equal_trim_whitespace,
-                "equal_percentage": dtostr(round(_equal / _total, 4)),
-                "not_equal_percentage": dtostr(round(_not_equal / _total, 4)),
-                "equal_case_insensitive_percentage": dtostr(round(_equal_case_insensitive / _total, 4)),
-                "equal_trim_whitespace_percentage": dtostr(round(_equal_trim_whitespace / _total, 4))
+                "equal_percentage": dtostr(round(_equal / _common, 4)),
+                "not_equal_percentage": dtostr(round(_not_equal / _common, 4)),
+                "equal_case_insensitive_percentage": dtostr(round(_equal_case_insensitive / _common, 4)),
+                "equal_trim_whitespace_percentage": dtostr(round(_equal_trim_whitespace / _common, 4))
             }
 
             return result
@@ -700,6 +706,7 @@ class NumericColumnReconciler(ColumnReconciler):
                 stats as (
                     select
                         count(*) as total,
+                        sum(case when bcid is not null and tcid is not null then 1 else 0 end) as common,
                         sum(case when bcid - tcid = 0 then 1 else 0 end) as equal,
                         sum(case 
                                 when bcid = tcid then 1
@@ -714,9 +721,7 @@ class NumericColumnReconciler(ColumnReconciler):
                             else 0 
                             end) as equal_within_10_difference,                            
                         sum(case when bcid - tcid != 0 then 1 else 0 end) as not_equal,
-                        sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable,
-                        round(sum(case when bcid - tcid = 0 then 1 else 0 end) * 1.0 / count(*), 4) as equal_perc,
-                        round(sum(case when bcid != tcid then 1 else 0 end) * 1.0 / count(*), 4) as not_equal_perc
+                        sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable
                     from fjoin
                 )
                 select * from stats
@@ -725,17 +730,13 @@ class NumericColumnReconciler(ColumnReconciler):
             result = conn.execute(text(query)).fetchone()
             (
                 _total,
+                _common,
                 _equal,
                 _equal_within_5_difference,
                 _equal_within_10_difference,
                 _not_equal,
                 _not_comparable,
-                _equal_perc,
-                _not_equal_perc,
             ) = result
-
-            _equal_perc = dtof(_equal_perc)
-            _not_equal_perc = dtof(_not_equal_perc)
 
             result = {
                 "name": self.name,
@@ -747,14 +748,15 @@ class NumericColumnReconciler(ColumnReconciler):
                 "target_compare_key": self.target_compare_col.name,
                 "total": _total,
                 "equal": _equal,
+                "common": _common,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
                 "equal_within_5_difference": _equal_within_5_difference,
                 "equal_within_10_difference": _equal_within_10_difference,
-                "equal_percentage": dtostr(_equal_perc),
-                "not_equal_percentage": dtostr(_not_equal_perc),
-                "equal_within_5_difference_percentage": dtostr(round(_equal_within_5_difference / _total, 4)),
-                "equal_within_10_difference_percentage": dtostr(round(_equal_within_10_difference / _total, 4)),
+                "equal_percentage": dtostr(round(_equal / _common, 4)),
+                "not_equal_percentage": dtostr(round(_not_equal / _common, 4)),
+                "equal_within_5_difference_percentage": dtostr(round(_equal_within_5_difference / _common, 4)),
+                "equal_within_10_difference_percentage": dtostr(round(_equal_within_10_difference / _common, 4)),
             }
 
             return result
@@ -802,6 +804,7 @@ class DatetimeColumnReconciler(ColumnReconciler):
                 stats as (
                     select
                         count(*) as total,
+                        sum(case when bcid is not null and tcid is not null then 1 else 0 end) as common,
                         sum(case when julianday(bcid) - julianday(tcid) = 0 then 1 else 0 end) as equal,
                         sum(case when julianday(bcid) - julianday(tcid) != 0 then 1 else 0 end) as not_equal,
                         sum(case when abs(julianday(bcid) - julianday(tcid)) < 1 then 1 else 0 end) as equal_within_1_day_difference,
@@ -818,6 +821,7 @@ class DatetimeColumnReconciler(ColumnReconciler):
                 stats as (
                     select
                         count(*) as total,
+                        sum(case when bcid is not null and tcid is not null then 1 else 0 end) as common,
                         sum(case when abs(bcid::date - tcid::date) = 0 then 1 else 0 end) as equal,
                         sum(case when abs(bcid::date - tcid::date) != 0 then 1 else 0 end) as not_equal,
                         sum(case when abs(bcid::date - tcid::date) < 1 then 1 else 0 end) as equal_within_1_day_difference,
@@ -829,7 +833,7 @@ class DatetimeColumnReconciler(ColumnReconciler):
                 select * from stats
                 """
             result = conn.execute(text(query)).fetchone()
-            _total, _equal, _not_equal, equal_withitn_1_day_difference, equal_within_1_week_difference, equal_within_1_month_difference, _not_comparable = result
+            _total, _common, _equal, _not_equal, equal_within_1_day_difference, equal_within_1_week_difference, equal_within_1_month_difference, _not_comparable = result
 
             result = {
                 "name": self.name,
@@ -840,17 +844,18 @@ class DatetimeColumnReconciler(ColumnReconciler):
                 "base_compare_key": self.base_compare_col.name,
                 "target_compare_key": self.target_compare_col.name,
                 "total": _total,
+                "common": _common,
                 "equal": _equal,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
-                "equal_percentage": dtostr(round(_equal / _total, 4)),
-                "not_equal_percentage": dtostr(round(1 - _equal / _total, 4)),
-                "equal_within_1_day_difference": equal_withitn_1_day_difference,
+                "equal_percentage": dtostr(round(_equal / _common, 4)),
+                "not_equal_percentage": dtostr(round(1 - _equal / _common, 4)),
+                "equal_within_1_day_difference": equal_within_1_day_difference,
                 "equal_within_1_week_difference": equal_within_1_week_difference,
                 "equal_within_1_month_difference": equal_within_1_month_difference,
-                "equal_within_1_day_difference_percentage": dtostr(round(equal_withitn_1_day_difference / _total, 4)),
-                "equal_within_1_week_difference_percentage": dtostr(round(equal_within_1_week_difference / _total, 4)),
-                "equal_within_1_month_difference_percentage": dtostr(round(equal_within_1_month_difference / _total, 4)),
+                "equal_within_1_day_difference_percentage": dtostr(round(equal_within_1_day_difference / _common, 4)),
+                "equal_within_1_week_difference_percentage": dtostr(round(equal_within_1_week_difference / _common, 4)),
+                "equal_within_1_month_difference_percentage": dtostr(round(equal_within_1_month_difference / _common, 4)),
             }
             return result
 
@@ -895,6 +900,7 @@ class BooleanColumnReconciler(ColumnReconciler):
             stats as (
                 select
                     count(*) as total,
+                    sum(case when bcid is not null and tcid is not null then 1 else 0 end) as common,
                     sum(case when bcid = tcid then 1 else 0 end) as equal,
                     sum(case when bcid != tcid then 1 else 0 end) as not_equal,
                     sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable
@@ -903,7 +909,7 @@ class BooleanColumnReconciler(ColumnReconciler):
             select * from stats
             """
             result = conn.execute(text(query)).fetchone()
-            _total, _equal, _not_equal, _not_comparable = result
+            _total, _common, _equal, _not_equal, _not_comparable = result
 
             result = {
                 "name": self.name,
@@ -917,8 +923,8 @@ class BooleanColumnReconciler(ColumnReconciler):
                 "equal": _equal,
                 "not_equal": _not_equal,
                 "not_comparable": _not_comparable,
-                "equal_percentage": dtostr(round(_equal / _total, 4)),
-                "not_equal_percentage": dtostr(round(1 - _equal / _total, 4)),
+                "equal_percentage": dtostr(round(_equal / _common, 4)),
+                "not_equal_percentage": dtostr(round(1 - _equal / _common, 4)),
             }
             return result
 
@@ -929,8 +935,10 @@ class MismatchDataTypeColumnReconciler:
     It may invlove some type conversion before comparison
     """
 
-    def reconcile(self) -> dict:
-        raise NotImplementedError
+    def reconcile(self) -> dict:        
+        # raise NotImplementedError
+        Warning("Different type comparison not implemented yet")
+        return {}
 
 
 def reconcile_table_counts(
