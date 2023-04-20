@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Domain Spectrum</title>
+  <link rel="icon" href="./icon/favicon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="header">
+    <!-- <div class="domain">
+      <img src="./icon/domain.svg" alt="domain">
+    </div>
+     -->
+    <img src="icon/favicon.png" alt="icon">
+    <span> Spectrum dataset analyser </span>
+
+    <!-- input tag -->
+    <input id="searchbar" onkeyup="search()" type="text"
+    name="search" placeholder="search report">
+  </div>
+
+
+  <div class="grid-container">
+    
+    <div class="grid-item">
+      <h3>Profiling report</h3>
+      <ul>
+        <li class="report-list"><a href="./static/svp_datamart-20230414113047/">svp datamart</a></li>
+        <li class="report-list"><a href="./static/svp_base/">svp base</a></li>
+        <li class="report-list"><a href="./static/svp_reference-20230414115331/">svp reference data</a></li>
+      </ul>
+    </div>
+
+    <div class="vl"></div>
+
+    <div class="grid-item">
+      <h3>Reconcile report</h3>
+      <ul>
+        <li class="report-list"><a href="./static/leadscope_svp_latest/">Leadscope SVP integration </a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- <div class="footer"> Powered by domain data</div> -->
+  <footer>
+    <p>Powered by Domain Data</p>
+  </footer>
+
+</body>
+<script src="scripts/search.js"></script>
+</html>
