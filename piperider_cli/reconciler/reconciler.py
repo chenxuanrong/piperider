@@ -460,7 +460,18 @@ class Reconciler:
                 )
             elif base_compare_key.type != target_compare_key.type:
                 console.print(f'base type {base_compare_key.type} is mismatched with target type {target_compare_key.type}')
-                reconciler = MismatchDataTypeColumnReconciler()
+                reconciler = MismatchDataTypeColumnReconciler(
+                    self.bengine,
+                    base_table,
+                    target_table,
+                    base_column,
+                    target_column,
+                    base_compare_key,
+                    target_compare_key,
+                    rule_name,
+                    base_db,
+                    target_db,
+                )
             else:
                 raise UnhandableColumnTypeError
 
@@ -929,16 +940,149 @@ class BooleanColumnReconciler(ColumnReconciler):
             return result
 
 
-class MismatchDataTypeColumnReconciler:
+class MismatchDataTypeColumnReconciler(ColumnReconciler):
     """
     This class is used to reconcile columns with mismatched data types (e.g. int vs. string)
     It may invlove some type conversion before comparison
     """
 
+    def __init__(
+        self,
+        engine: Engine,
+        base_table: Table,
+        target_table: Table,
+        base_col: Column,
+        target_col: Column,
+        base_compare_col: Column,
+        target_compare_col: Column,
+        name: str,
+        base_database: str = None,
+        target_database: str = None,
+    ):
+        super().__init__(
+            engine,
+            base_table,
+            target_table,
+            base_col,
+            target_col,
+            base_compare_col,
+            target_compare_col,
+            name=name,
+            base_database=base_database,
+            target_database=target_database,
+        )
+
+    def _base_cte(self, bkey, bcompkey, tkey, tcompkey) -> str:
+        if self._get_database_backend() == "sqlite":
+            cte = f"""
+                with b as (
+                    select
+                        {bkey} as bid,
+                        {bcompkey}
+                    from {self.base_database + '.' if self.base_database else ''}{self.base_table.schema + '.' if self.base_table.schema else ''}{self.base_table.name}
+                ),
+                t as (
+                    select
+                        {tkey} as tid,
+                        {tcompkey}
+                    from {self.target_database+'.' if self.target_database else ''}{self.target_table.schema+'.' if self.target_table.schema else ''}{self.target_table.name}
+                ),
+                fjoin as (
+                    select
+                       bid, tid, {bcompkey}, {tcompkey}
+                    from b
+                    left join t
+                    on bid = tid
+
+                    union
+
+                    select
+                      bid, tid, {bcompkey}, {tcompkey}
+                    from t
+                    left join b
+                    on tid = bid
+                ),
+            """
+        else:        
+            cte = f"""
+                with b as (
+                    select
+                        {bkey} as bid,
+                        {bcompkey}
+                    from {self.base_database+'.' if self.base_database else ''}{self.base_table.schema+'.' if self.base_table.schema else ''}{self.base_table.name}
+                ),
+                t as (
+                    select
+                        {tkey} as tid,
+                        {tcompkey}
+                    from {self.target_database+'.' if self.target_database else ''}{self.target_table.schema+'.' if self.target_table.schema else ''}{self.target_table.name}
+                ),
+                fjoin as (
+                    select bid, bcid, b.{bcompkey}, t.{tcompkey}
+                    from b
+                    full outer join t
+                    on b.bid = t.tid
+                ),
+            """
+        return cte
+
     def reconcile(self) -> dict:        
-        # raise NotImplementedError
-        Warning("Different type comparison not implemented yet")
-        return {}
+        # Warning("Different type comparison not implemented yet")
+        bkey = self.base_col.name
+        tkey = self.target_col.name
+        bcompkey = self.base_compare_col.name
+        tcompkey = self.target_compare_col.name
+        cte = super()._base_cte(bkey, bcompkey, tkey, tcompkey)
+        bcompkey_type = self.base_compare_col.type
+        tcompkey_type = self.target_compare_col.type
+
+        bcid = "cast(bcid as varchar)"
+        tcid = "cast(tcid as varchar)"
+        # Reference: https://docs.snowflake.com/en/sql-reference/data-type-conversion#data-types-that-can-be-cast
+        # if (bcompkey_type == 'string' and tcompkey_type == 'integer') or bcompkey_type == 'integer' and tcompkey_type == 'string':
+        #     bcid = f"cast({bcid} as text)"
+        #     tcid = f"cast({tcid} as text)"
+        # if (bcompkey_type == 'string' and tcompkey_type == 'datetime') or bcompkey_type == 'datetime' and tcompkey_type == 'string':
+        #     bcid = f"cast({bcid} as text)"
+        #     tcid = f"cast({tcid} as text)"
+
+        with self.bengine.connect() as conn:
+        
+            query = f"""
+            {cte}
+            stats as (
+                select
+                    count(*) as total,
+                    sum(case when {bcid} is not null and {tcid} is not null then 1 else 0 end) as common,
+                    sum(case when {bcid} = {tcid} then 1 else 0 end) as equal,
+                    sum(case when {bcid} != {tcid} then 1 else 0 end) as not_equal,
+                    sum(case when {bcid} is null or {tcid} is null then 1 else 0 end) as not_comparable
+                from fjoin
+            )
+            select * from stats
+            """
+            # console = Console()
+            # console.print(query)
+
+            result = conn.execute(text(query)).fetchone()
+            _total, _common, _equal, _not_equal, _not_comparable = result
+
+            result = {
+                "name": self.name,
+                "base_table": self.base_table.name,
+                "base_column": self.base_col.name,
+                "target_table": self.target_table.name,
+                "target_column": self.target_col.name,
+                "base_compare_key": self.base_compare_col.name,
+                "target_compare_key": self.target_compare_col.name,
+                "total": _total,
+                "equal": _equal,
+                "not_equal": _not_equal,
+                "not_comparable": _not_comparable,
+                "equal_percentage": dtostr(round(_equal / _common, 4)),
+                "not_equal_percentage": dtostr(round(1 - _equal / _common, 4)),
+            }
+            return result
 
 
 def reconcile_table_counts(

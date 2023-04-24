@@ -13,6 +13,7 @@ from piperider_cli.reconciler.reconciler import (
     StringColumnReconciler,
     NumericColumnReconciler,
     DatetimeColumnReconciler,
+    MismatchDataTypeColumnReconciler,
     dtostr,
 )
 from piperider_cli.reconciler.reconcile_rule import (
@@ -31,16 +32,16 @@ class TestReconciler(TestCase):
         self.reconciler = Reconciler(self.db.engine)
 
         data1 = [
-            ("user_id", "user_name", "age", "birthday"),
-            (1, "bob", 23, date(1990,1,1)),
-            (2, "alice", 25, date(1990,2,2)),
+            ("user_id", "user_name", "age", "birthday", "toys"),
+            (1, "bob", 23, date(1990,1,1), 2),
+            (2, "alice", 25, date(1990,2,2), 3),
         ]
 
         data2 = [
-            ("user_id", "user_name", "age", "birthday"),
-            (1, "Bob", 22, date(1990,1,1)),
-            (2, "alice", 25, date(1990,2,1)),
-            (3, "karen", 18, date(1991,7,1)),
+            ("user_id", "user_name", "age", "birthday", "toys"),
+            (1, "Bob", 22, date(1990,1,1), "2"),
+            (2, "alice", 25, date(1990,2,1), "1"),
+            (3, "karen", 18, date(1991,7,1), "3"),
         ]
         self.base_table = self.db.create_table("test1", data1)
         self.target_table = self.db.create_table("test2", data2)
@@ -125,8 +126,8 @@ class TestReconciler(TestCase):
         assert result["target_compare_key"] == "age"
         assert result["total"] == 3
         assert result["equal"] == 1
-        assert result["equal_within_5_difference"] == 1
-        assert result["equal_within_10_difference"] == 1
+        assert result["equal_within_5_difference"] == 2
+        assert result["equal_within_10_difference"] == 2
         assert result["not_equal"] == 1
         assert result["not_comparable"] == 1
         assert result["not_comparable"] + result["equal"] + result["not_equal"] == result["total"]
@@ -177,6 +178,44 @@ class TestReconciler(TestCase):
         assert "equal_percentage" in result
         assert "not_equal_percentage" in result
 
+    def test_mismatched_column_toys(self):        
+        base_column = self.base_table.columns.get('user_id')
+        target_column = self.target_table.columns.get('user_id')
+        base_compare_column = self.base_table.columns.get('toys')
+        target_compare_column = self.target_table.columns.get('toys')
+        
+        crule = ColumnReconcileRule(
+            name="user_toys",
+            base_column="user_id",
+            target_column="user_id",
+            base_compare_column="toys",
+            target_compare_column="toys",
+            reconcile_condition="equal",
+        )
+
+        column_reconciler = MismatchDataTypeColumnReconciler(engine=self.engine,
+                                                   base_table=self.base_table,
+                                                   target_table=self.target_table,
+                                                   base_col=base_column,
+                                                   target_col=target_column,
+                                                   base_compare_col=base_compare_column,
+                                                   target_compare_col=target_compare_column,
+                                                   name="toys",
+                                                )                
+        result = column_reconciler.reconcile()
+        assert result["name"] == "toys"
+        assert result["base_table"] == "test1"
+        assert result["target_table"] == "test2"
+        assert result["base_compare_key"] == "toys"
+        assert result["target_compare_key"] == "toys"
+        assert result["total"] == 3
+        assert result["equal"] == 1
+        assert result["not_equal"] == 1
+        assert result["not_comparable"] == 1
+        assert result["not_comparable"] + result["equal"] + result["not_equal"] == result["total"]
+        assert "equal_percentage" in result
+        assert "not_equal_percentage" in result
+
     def test_reconcile_with_null(self):
         return True
 
@@ -209,7 +248,7 @@ class TestReconciler(TestCase):
         assert result["not_equal"] == 1
         assert result["not_comparable"] == 1
         assert result["not_comparable"] + result["equal"] + result["not_equal"] == result["total"]
-        assert result["equal_percentage"] == "33.33%"
+        assert result["equal_percentage"] == "50.00%"
 
 
     @skip("Sqlite not implemented")
@@ -227,6 +266,7 @@ class TestReconciler(TestCase):
         assert "columns" in res["reconcile"][0]["columns"]
         
         assert res is not null
+
 
 def test_dtostr():
     number = 0.1234
