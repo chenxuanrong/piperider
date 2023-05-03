@@ -497,12 +497,13 @@ class CompareReport(object):
                 raise Exception("Not enough reports to compare. Please run 'piperider run' first.")
             report_msg = 'a report' if limit == 1 else f'the {limit} reports'
             questions = [
-                inquirer_hack.LimitedCheckboxQuestion('profiler_output',
+                #revert back to inqurirer.checkbox to ease the `LimitedCheckboxQuestion has no locked attribute` error  
+                inquirer.Checkbox('profiler_output',
                                                       message=f"Please select {report_msg} to {action} ({arrow_alias_msg} SPACE to select, and ENTER to confirm )",
                                                       choices=profiler_outputs,
                                                       carousel=True,
                                                       validate=_report_validater,
-                                                      limited=limit,
+                                                    #   limited=limit,
                                                       )
             ]
 
