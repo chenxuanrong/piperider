@@ -248,7 +248,7 @@ def config(**kwargs):
     pass
 
 
-@config.command(name='list-datasource', short_help='List DataSources in current PipeRider project',
+@cli.command(name='list-datasource', short_help='List DataSources in current PipeRider project',
                 cls=TrackCommand,
                 beta=True)
 @add_options(debug_option)
