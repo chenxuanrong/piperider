@@ -1,6 +1,6 @@
 
 # piperider init
-None
+Initialize a PipeRider project in interactive mode. The configurations are saved in ".piperider".
 ## Usage
 ```
 Usage: piperider init [OPTIONS]
@@ -11,7 +11,7 @@ Usage: piperider init [OPTIONS]
   * Default: `false`
   * Usage: `--no-auto-search`
 
-  Don't search for dbt projects
+  Disable auto detection of dbt projects.
 
 
 * `dbt_project_dir`: 
@@ -19,7 +19,7 @@ Usage: piperider init [OPTIONS]
   * Default: `none`
   * Usage: `--dbt-project-dir`
 
-  Directory of dbt project config
+  Directory to search for dbt_project.yml.
 
 
 * `dbt_profiles_dir`: 
@@ -27,7 +27,7 @@ Usage: piperider init [OPTIONS]
   * Default: `none`
   * Usage: `--dbt-profiles-dir`
 
-  Directory of dbt profiles config
+  Directory to search for dbt profiles.yml.
 
 
 * `debug`: 
@@ -35,7 +35,7 @@ Usage: piperider init [OPTIONS]
   * Default: `false`
   * Usage: `--debug`
 
-  Enable debug mode
+  Enable debug mode.
 
 
 * `help`: 
@@ -50,10 +50,13 @@ Usage: piperider init [OPTIONS]
 ```
 Usage: piperider init [OPTIONS]
 
+  Initialize a PipeRider project in interactive mode. The configurations are
+  saved in ".piperider".
+
 Options:
-  --no-auto-search         Don't search for dbt projects
-  --dbt-project-dir PATH   Directory of dbt project config
-  --dbt-profiles-dir PATH  Directory of dbt profiles config
-  --debug                  Enable debug mode
+  --no-auto-search         Disable auto detection of dbt projects.
+  --dbt-project-dir PATH   Directory to search for dbt_project.yml.
+  --dbt-profiles-dir PATH  Directory to search for dbt profiles.yml.
+  --debug                  Enable debug mode.
   --help                   Show this message and exit.
 ```

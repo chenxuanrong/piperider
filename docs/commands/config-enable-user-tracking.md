@@ -1,9 +1,9 @@
 
-# piperider version
-Show version information.
+# config enable-user-tracking
+None
 ## Usage
 ```
-Usage: piperider version [OPTIONS]
+Usage: piperider config enable-user-tracking [OPTIONS]
 ```
 ## Options
 * `help`: 
@@ -16,9 +16,7 @@ Usage: piperider version [OPTIONS]
 
 ## CLI Help
 ```
-Usage: piperider version [OPTIONS]
-
-  Show version information.
+Usage: piperider config enable-user-tracking [OPTIONS]
 
 Options:
   --help  Show this message and exit.

@@ -1,9 +1,9 @@
 
-# piperider version
-Show version information.
+# config disable-auto-upload
+None
 ## Usage
 ```
-Usage: piperider version [OPTIONS]
+Usage: piperider config disable-auto-upload [OPTIONS]
 ```
 ## Options
 * `help`: 
@@ -16,9 +16,7 @@ Usage: piperider version [OPTIONS]
 
 ## CLI Help
 ```
-Usage: piperider version [OPTIONS]
-
-  Show version information.
+Usage: piperider config disable-auto-upload [OPTIONS]
 
 Options:
   --help  Show this message and exit.

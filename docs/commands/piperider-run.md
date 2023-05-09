@@ -1,6 +1,6 @@
 
 # piperider run
-None
+Profile data source, run assertions, and generate report(s). By default, the raw results and reports are saved in ".piperider/outputs".
 ## Usage
 ```
 Usage: piperider run [OPTIONS]
@@ -11,7 +11,7 @@ Usage: piperider run [OPTIONS]
   * Default: `none`
   * Usage: `--datasource`
 
-  
+  Datasource to use.
 
 
 * `table`: 
@@ -19,31 +19,56 @@ Usage: piperider run [OPTIONS]
   * Default: `none`
   * Usage: `--table`
 
-  
+  Table to use.
 
 
 * `output`: 
   * Type: STRING 
   * Default: `none`
-  * Usage: `--output`
+  * Usage: `--output
+-o`
 
-  
+  Directory to save the results.
 
 
-* `no_interaction`: 
+* `skip_report`: 
   * Type: BOOL 
   * Default: `false`
-  * Usage: `--no-interaction`
+  * Usage: `--skip-report`
 
-  Disable interactive question
+  Skip generating report.
 
 
-* `generate_report`: 
+* `dbt_state`: 
+  * Type: STRING 
+  * Default: `none`
+  * Usage: `--dbt-state`
+
+  Directory of the the dbt state.
+
+
+* `report_dir`: 
+  * Type: STRING 
+  * Default: `none`
+  * Usage: `--report-dir`
+
+  Use a different report directory.
+
+
+* `upload`: 
   * Type: BOOL 
   * Default: `false`
-  * Usage: `--generate-report`
+  * Usage: `--upload`
 
-  Generate report directly
+  Upload the report to the PipeRider Cloud.
+
+
+* `open`: 
+  * Type: BOOL 
+  * Default: `false`
+  * Usage: `--open`
+
+  Opens the generated report in the system's default browser
 
 
 * `debug`: 
@@ -51,7 +76,7 @@ Usage: piperider run [OPTIONS]
   * Default: `false`
   * Usage: `--debug`
 
-  Enable debug mode
+  Enable debug mode.
 
 
 * `help`: 
@@ -66,12 +91,19 @@ Usage: piperider run [OPTIONS]
 ```
 Usage: piperider run [OPTIONS]
 
+  Profile data source, run assertions, and generate report(s). By default, the
+  raw results and reports are saved in ".piperider/outputs".
+
 Options:
-  --datasource TEXT
-  --table TEXT
-  --output TEXT
-  --no-interaction   Disable interactive question
-  --generate-report  Generate report directly
-  --debug            Enable debug mode
-  --help             Show this message and exit.
+  --datasource DATASOURCE_NAME  Datasource to use.
+  --table TABLE_NAME            Table to use.
+  -o, --output TEXT             Directory to save the results.
+  --skip-report                 Skip generating report.
+  --dbt-state TEXT              Directory of the the dbt state.
+  --report-dir TEXT             Use a different report directory.
+  --upload                      Upload the report to the PipeRider Cloud.
+  --open                        Opens the generated report in the system's
+                                default browser
+  --debug                       Enable debug mode.
+  --help                        Show this message and exit.
 ```
