@@ -23,8 +23,6 @@ export function ReconcileDetailMasterList({
   onNavToTableDetail,
 }: Props) {
   const isActive = currentRule === '' && currentReconcile;
-  console.log(`${currentReconcile}, ${currentRule}`);
-  console.log(isActive);
 
   return (
     <Flex direction={'column'} position={'relative'} bg={'gray.50'}>

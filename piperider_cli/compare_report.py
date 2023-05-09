@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 import inquirer
 import readchar
@@ -497,14 +497,14 @@ class CompareReport(object):
                 raise Exception("Not enough reports to compare. Please run 'piperider run' first.")
             report_msg = 'a report' if limit == 1 else f'the {limit} reports'
             questions = [
-                inquirer_hack.LimitedCheckboxQuestion('profiler_output',
-                                                      message=f"Please select {report_msg} to {action} ({arrow_alias_msg} SPACE to select, and ENTER to confirm )",
-                                                      choices=profiler_outputs,
-                                                      carousel=True,
-                                                      validate=_report_validater,
-                                                      limited=limit,
-                                                      )
+                inquirer.Checkbox('profiler_output', 
+                                  message=f"Please select {report_msg} to {action} ({arrow_alias_msg} SPACE to select, and ENTER to confirm )",
+                                  choices=profiler_outputs,
+                                  carousel=True,
+                                  validate=_report_validater,
+                                  )
             ]
+
 
         answers = inquirer_hack.prompt_ex(questions, raise_keyboard_interrupt=True)
         if answers:
@@ -518,7 +518,7 @@ class CompareReport(object):
         else:
             return None
 
-    def select_two_reports(self, action='compare') -> (RunOutput, RunOutput):
+    def select_two_reports(self, action='compare') -> Tuple[RunOutput, RunOutput]:
         """
         Select multiple files from a list of files.
         """

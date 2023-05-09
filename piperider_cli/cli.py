@@ -248,9 +248,7 @@ def config(**kwargs):
     pass
 
 
-@config.command(name='list-datasource', short_help='List DataSources in current PipeRider project',
-                cls=TrackCommand,
-                beta=True)
+@cli.command(name='list-datasource', short_help='List DataSources in current PipeRider project', cls=TrackCommand, beta=True)
 @add_options(debug_option)
 def list(**kwargs):
     'List PipeRider current configurations.'
@@ -399,4 +397,4 @@ def reconcile(**kwargs):
 if __name__ == '__main__':
     # reconciler = Reconciler(engine=None)
     # reconciler.reconcile(project='pipeline_v2')
-    reconcile()
+    compare_reports()

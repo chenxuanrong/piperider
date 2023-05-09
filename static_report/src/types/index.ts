@@ -42,6 +42,7 @@ export interface ReconcileColumnMetrics {
    * Common statistics
    */
   total?: number;
+  common?: number;
   equal?: number;
   equal_percentage?: number;
   not_equal?: number;

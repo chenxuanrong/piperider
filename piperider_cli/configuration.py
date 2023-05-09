@@ -9,8 +9,8 @@ from ruamel.yaml import CommentedMap, CommentedSeq
 from piperider_cli import round_trip_load_yaml, safe_load_yaml
 from piperider_cli.datasource import DATASOURCE_PROVIDERS, DataSource
 from piperider_cli.reconciler.reconcile_rule import (
-    ReconcileSuite, 
-    ColumnReconcileRule, 
+    ReconcileSuite,
+    ColumnReconcileRule,
     ReconcileProject,
 )
 from piperider_cli.error import \
@@ -35,7 +35,6 @@ PIPERIDER_RECONCILE_PATH = os.path.join(os.getcwd(), PIPERIDER_WORKSPACE_NAME, '
 DBT_PROFILES_DIR_DEFAULT = '~/.dbt/'
 DBT_PROFILE_FILE = 'profiles.yml'
 
-# logger = get_logger(__name__)
 
 class Configuration(object):
     """
@@ -43,7 +42,7 @@ class Configuration(object):
     at $PROJECT_ROOT/.piperider/config.yml
     """
 
-    def __init__(self, dataSources: List[DataSource], reconcileRules: List[ReconcileSuite]=None, **kwargs):
+    def __init__(self, dataSources: List[DataSource], reconcileRules: List[ReconcileSuite] = None, **kwargs):
         self.dataSources: List[DataSource] = dataSources
         self.profiler_config = kwargs.get('profiler', {}) or {}
         self.includes = kwargs.get('includes', None)
@@ -160,7 +159,6 @@ class Configuration(object):
         """
         credentials = None
 
-
         config = safe_load_yaml(piperider_config_path)
         if config is None:
             raise PipeRiderConfigError(piperider_config_path)
@@ -237,7 +235,7 @@ class Configuration(object):
                         description=description,
                         base_source=base_source,
                         target_source=target_source,
-                        suites=[],                        
+                        suites=[],
                     )
 
                     suites = r_project.get('suites', [])
@@ -249,7 +247,7 @@ class Configuration(object):
                         target_join_key = r_suite.get('target', {}).get('join_key')
 
                         suite = ReconcileSuite(
-                            name=suite_name, 
+                            name=suite_name,
                             description=r_suite.get('description'),
                             base_table=base_table,
                             target_table=target_table,
@@ -273,51 +271,9 @@ class Configuration(object):
                                 target_compare_column=r_rule.get('target_column')
                             )
 
-                            suite.add_rule(rule)                        
-                        
+                            suite.add_rule(rule)
                         project.add_suite(suite)
-                    
                     reconcile_rules.append(project)
-                    
-
-                    #     reconcile_rules.append(suite)
-                    # base_table = r_project.get('base', {}).get('table')
-                    # base_join_key = r_project.get('base', {}).get('join_key')
-
-                    # target_table = r_project.get('target', {}).get('table')
-                    # target_join_key = r_project.get('target', {}).get('join_key')
-
-                    # rules = []
-                    # for r in r_project.get('rules', []):
-                    #     rule_name = r.get('name')
-                    #     if not rule_name:
-                    #         raise ReconcileRuleAssertionError()
-
-                    #     c_rule = ColumnReconcileRule(
-                    #         base_column=base_join_key,
-                    #         target_column=target_join_key,
-                    #         base_compare_key=r.get('base_column'),
-                    #         target_compare_key=r.get('target_column'),
-                    #         name=rule_name,
-                    #         description=r.get('description'),
-                    #     )
-
-                    #     rules.append(c_rule)
-
-                    # reconcile_rules.append(
-                    #     ReconcileSuite(
-                    #         base_source=base_source,
-                    #         target_source=target_source,
-                    #         description=description,
-                    #         name=reconcile_project,
-                    #         base_table=base_table,
-                    #         target_table=target_table,
-                    #         base_join_key=base_join_key,
-                    #         target_join_key=target_join_key,
-                    #         column_reconcile_rules=rules
-                    #     )
-                    # )
-
 
         return cls(
             dataSources=data_sources,

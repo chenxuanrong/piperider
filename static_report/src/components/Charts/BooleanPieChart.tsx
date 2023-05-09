@@ -45,7 +45,11 @@ export function BooleanPieChart({
     data: counts,
   });
   return (
-    <Pie data={chartData} options={chartOptions} plugins={[Tooltip, Legend]} />
+    <Pie
+      data={chartData}
+      options={chartOptions}
+      plugins={[Tooltip as any, Legend as any]}
+    />
   );
 }
 

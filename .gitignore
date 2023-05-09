@@ -321,3 +321,5 @@ piperider-getting-started
 *.db
 
 .envrc
+.sample
+webserver/static

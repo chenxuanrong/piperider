@@ -118,8 +118,20 @@ export default function RRColumnDetailsPage({
         {
           name: 'total',
           firstSlot: data.total,
-          secondSlot: '100%',
+          secondSlot: '-',
           metaKey: 'total',
+        },
+        {
+          name: 'not comparable',
+          firstSlot: data.not_comparable,
+          secondSlot: '-',
+          metaKey: 'not_comparable',
+        },
+        {
+          name: 'common',
+          firstSlot: data.common,
+          secondSlot: '-',
+          metaKey: 'common',
         },
         {
           name: 'equal',
@@ -147,8 +159,20 @@ export default function RRColumnDetailsPage({
         {
           name: 'total',
           firstSlot: data.total,
-          secondSlot: '100%',
+          secondSlot: '-',
           metaKey: 'total',
+        },
+        {
+          name: 'not comparable',
+          firstSlot: data.not_comparable,
+          secondSlot: '-',
+          metaKey: 'not_comparable',
+        },
+        {
+          name: 'common',
+          firstSlot: data.common,
+          secondSlot: '-',
+          metaKey: 'common',
         },
         {
           name: 'equal',
@@ -176,8 +200,20 @@ export default function RRColumnDetailsPage({
         {
           name: 'total',
           firstSlot: data.total,
-          secondSlot: '100%',
+          secondSlot: '-',
           metaKey: 'total',
+        },
+        {
+          name: 'not comparable',
+          firstSlot: data.not_comparable,
+          secondSlot: '-',
+          metaKey: 'not_comparable',
+        },
+        {
+          name: 'common',
+          firstSlot: data.common,
+          secondSlot: '-',
+          metaKey: 'common',
         },
         {
           name: 'equal',
@@ -211,8 +247,20 @@ export default function RRColumnDetailsPage({
         {
           name: 'total',
           firstSlot: data.total,
-          secondSlot: '100%',
+          secondSlot: '-',
           metaKey: 'total',
+        },
+        {
+          name: 'not comparable',
+          firstSlot: data.not_comparable,
+          secondSlot: '-',
+          metaKey: 'not_comparable',
+        },
+        {
+          name: 'common',
+          firstSlot: data.common,
+          secondSlot: '-',
+          metaKey: 'common',
         },
         {
           name: 'equal',
