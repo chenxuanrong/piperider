@@ -20,6 +20,7 @@ from piperider_cli.runner import (
 )
 from piperider_cli.filesystem import FileSystem
 
+
 def dtostr(number: Union[int, float, decimal.Decimal]) -> str:
     """
     Format decimal/float to percentage string
@@ -719,18 +720,18 @@ class NumericColumnReconciler(ColumnReconciler):
                         count(*) as total,
                         sum(case when bcid is not null and tcid is not null then 1 else 0 end) as common,
                         sum(case when bcid - tcid = 0 then 1 else 0 end) as equal,
-                        sum(case 
+                        sum(case
                                 when bcid = tcid then 1
                                 when tcid = 0 and abs(bcid) <= 0.05 then 1
-                                when abs((bcid - tcid) * 1.0 / ((bcid + tcid) / 2) ) <= 0.05 then 1 
-                            else 0 
+                                when abs((bcid - tcid) * 1.0 / ((bcid + tcid) / 2) ) <= 0.05 then 1
+                            else 0
                             end) as equal_within_5_difference,
-                        sum(case 
+                        sum(case
                                 when bcid = tcid then 1
                                 when tcid = 0 and abs(bcid) <= 0.1 then 1
-                                when abs((bcid - tcid) * 1.0 / ((bcid + tcid) / 2) ) <= 0.1 then 1 
-                            else 0 
-                            end) as equal_within_10_difference,                            
+                                when abs((bcid - tcid) * 1.0 / ((bcid + tcid) / 2) ) <= 0.1 then 1
+                            else 0
+                            end) as equal_within_10_difference,
                         sum(case when bcid - tcid != 0 then 1 else 0 end) as not_equal,
                         sum(case when bcid is null or tcid is null then 1 else 0 end) as not_comparable
                     from fjoin
@@ -1033,8 +1034,6 @@ class MismatchDataTypeColumnReconciler(ColumnReconciler):
         bcompkey = self.base_compare_col.name
         tcompkey = self.target_compare_col.name
         cte = super()._base_cte(bkey, bcompkey, tkey, tcompkey)
-        bcompkey_type = self.base_compare_col.type
-        tcompkey_type = self.target_compare_col.type
 
         bcid = "cast(bcid as varchar)"
         tcid = "cast(tcid as varchar)"
@@ -1047,7 +1046,7 @@ class MismatchDataTypeColumnReconciler(ColumnReconciler):
         #     tcid = f"cast({tcid} as text)"
 
         with self.bengine.connect() as conn:
-        
+
             query = f"""
             {cte}
             stats as (

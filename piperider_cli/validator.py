@@ -167,6 +167,7 @@ class CloudAccountChecker(AbstractChecker):
             self.console.print(f"  Auto Upload: {piperider_cloud.config.get('auto_upload', False)}")
             return True, ""
 
+
 class CheckReconcileRules(AbstractChecker):
     def check_function(self, configurator: Configuration) -> (bool, str):
         all_passed = True
@@ -184,6 +185,7 @@ class CheckReconcileRules(AbstractChecker):
                     self.console.print(f'    {reason}')
                 failed_reasons.extend(reasons)
         return all_passed, failed_reasons
+
 
 class Validator():
     @staticmethod

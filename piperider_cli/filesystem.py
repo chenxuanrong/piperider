@@ -38,7 +38,7 @@ class FileSystem:
 
     def get_reconcile_dir(self):
         if self.report_dir is None:
-           return os.path.join(piperider_default_report_dir, 'reconciles') 
+            return os.path.join(piperider_default_report_dir, 'reconciles')
         return os.path.join(self.report_dir, 'reconciles')
 
     def get_report_dir(self):

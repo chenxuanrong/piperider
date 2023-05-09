@@ -62,6 +62,7 @@ class PipeRiderNoReconcileResultError(PipeRiderError):
     message = "No reconcile result is found."
     hint = "Please execute command 'piperider reconcile' to generate report."
 
+
 class PipeRiderInvalidDataSourceError(PipeRiderError):
     def __init__(self, name, config_file):
         self.name = name
@@ -191,6 +192,7 @@ class ReconcileRuleAssertionError(PipeRiderError):
     def __init__(self):
         self.message = "Reconcile rule not valid."
         self.hint = "Please check rule name is provided"
+
 
 class UnhandableColumnTypeError(PipeRiderError):
     def __init__(self):
