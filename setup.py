@@ -92,5 +92,4 @@ setup(name='piperider',
       ],
       package_data={
           'piperider_cli': ['*.json', 'VERSION', 'SENTRY_DNS', 'data/**', 'profiler/schema.json']
-      },
-      include_package_data=True)
+      })

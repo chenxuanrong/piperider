@@ -1,2 +1,0 @@
-include piperider_cli/data/**
-include piperider_cli/profiler/schema.json
