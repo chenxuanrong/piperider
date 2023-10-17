@@ -72,8 +72,8 @@ class TestReconciler(TestCase):
         assert r_suite.description == "Compare table in test1 vs test2"
         assert r_suite.base_table == "test1"
         assert r_suite.target_table == "test2"
-        assert r_suite.base_join_key == "user_id"
-        assert r_suite.target_join_key == "user_id"
+        assert r_suite.base_join_key == "user_id || activity_id"
+        assert r_suite.target_join_key == "user_id || event_id"
 
         r_rules = r_suite.column_reconcile_rules
         assert isinstance(r_rules, List)
@@ -251,7 +251,7 @@ class TestReconciler(TestCase):
         assert result["equal_percentage"] == "50.00%"
 
 
-    @skip("Sqlite not implemented")
+    # @skip("Sqlite not implemented")
     def test_reconciler_e2e(self):
         reconciler  = self.reconciler
         res = reconciler.reconcile(project="unittest")

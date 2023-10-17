@@ -9,10 +9,10 @@ Reconciles:
       description: Compare table in test1 vs test2
       base: 
         table: test1 
-        join_key: user_id 
+        join_key: user_id || activity_id
       target:
         table: test2
-        join_key: user_id
+        join_key: user_id || event_id
       rules:
         - name: user_name
           base_column: user_name 

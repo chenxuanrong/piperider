@@ -218,7 +218,8 @@ class Configuration(object):
         if os.path.exists(piperider_reconcile_path):
             # logger.info(f'Loading reconcile rules from {piperider_reconcile_path}')
             with open(piperider_reconcile_path, 'r') as frecon:
-                r_config = yaml.safe_load(frecon)
+                yml=yaml.YAML(typ='safe', pure=True)                
+                r_config = yml.load(frecon)
 
             r_projects = r_config.get('Reconciles')
             if r_projects:
