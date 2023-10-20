@@ -396,5 +396,5 @@ def reconcile(**kwargs):
 
 if __name__ == '__main__':
     reconciler = Reconciler(engine=None)
-    reconciler.reconcile(project='test_mock')
+    reconciler.reconcile(project='sdc_1244')
     # compare_reports()

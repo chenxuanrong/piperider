@@ -262,14 +262,17 @@ class Configuration(object):
                             rule_name = r_rule.get('name')
                             if not rule_name:
                                 raise ReconcileRuleAssertionError()
+                            
+                            base_compare_column=rule_name if r_rule.get('base_column') is None else r_rule.get('base_column')
+                            target_compare_column=rule_name if r_rule.get('target_column') is None else r_rule.get('target_column')
 
                             rule = ColumnReconcileRule(
                                 name=rule_name,
                                 description=r_rule.get('description'),
                                 base_column=base_join_key,
                                 target_column=target_join_key,
-                                base_compare_column=r_rule.get('base_column'),
-                                target_compare_column=r_rule.get('target_column')
+                                base_compare_column=base_compare_column,
+                                target_compare_column=target_compare_column
                             )
 
                             suite.add_rule(rule)
